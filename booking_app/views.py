@@ -4,7 +4,7 @@ from .models import Room, Booking
 from datetime import date
 
 class HomeView(View):
-    template_name = 'booking_app/home.html'
+    template_name = 'home.html'
 
     def get(self, request):
         today = date.today()
