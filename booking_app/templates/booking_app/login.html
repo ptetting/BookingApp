@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - Campus Study Room Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    .container { max-width: 420px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; }
+    .messages p { margin: 0 0 8px; color: #b00020; }
+    button, input { width: 100%; padding: 10px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+
+    <div class="messages">
+      {% if messages %}
+        {% for message in messages %}
+          <p>{{ message }}</p>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Login</button>
+    </form>
+
+    <p style="margin-top:12px;"><a href="{% url 'home' %}">Back to Home</a></p>
+  </div>
+</body>
+</html>
