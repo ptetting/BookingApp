@@ -128,12 +128,12 @@ class RoomAvailability(models.Model):
     room_availability_id = models.AutoField(primary_key=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, db_column='room_id')
     day_of_week = models.CharField(max_length=10)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    start_time = models.DateTimeField()   # changed from TimeField
+    end_time = models.DateTimeField()     # changed from TimeField
     is_available = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.room.room_number} - {self.day_of_week}"
+         return f"{self.room.room_number} - {self.start_time} to {self.end_time}"
 
 
 # --- Optional Product Table ---
