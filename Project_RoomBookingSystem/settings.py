@@ -76,7 +76,7 @@ WSGI_APPLICATION = 'Project_RoomBookingSystem.wsgi.application'
 DATABASES = {
      'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'campus_room_booking_test',
+        'NAME': 'campus_room_booking',
         'USER': 'root',                  # or 'root'
         'PASSWORD': 'admin',  # match what you set
         'HOST': 'localhost',
