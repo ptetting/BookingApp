@@ -6,7 +6,7 @@ from .models import *
 
 models_list = [
     Role, User, Profile, RoomType, Room,
-    Facility, RoomFeature, RoomRoomFeature,
+    Facility, RoomFeature, RoomFeatureLink,
     Booking, RoomAvailability, Notification,
     ActionLog, Product
 ]

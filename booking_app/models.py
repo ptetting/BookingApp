@@ -2,6 +2,7 @@ from django.db import models
 
 # --- Roles and Users ---
 class Role(models.Model):
+    role_id = models.AutoField(primary_key=True)
     role_name = models.CharField(max_length=50)
 
     def __str__(self):
@@ -9,10 +10,11 @@ class Role(models.Model):
 
 
 class User(models.Model):
+    user_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
     password_hash = models.CharField(max_length=255)
-    role = models.ForeignKey(Role, on_delete=models.CASCADE)
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, db_column='role_id')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -20,7 +22,8 @@ class User(models.Model):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    profile_id = models.AutoField(primary_key=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, db_column='user_id')
     phone_number = models.CharField(max_length=20, blank=True)
     address = models.CharField(max_length=255, blank=True)
 
@@ -30,6 +33,7 @@ class Profile(models.Model):
 
 # --- Room Tables ---
 class RoomType(models.Model):
+    room_type_id = models.AutoField(primary_key=True)
     room_type_name = models.CharField(max_length=50)
     room_type_description = models.TextField(blank=True)
 
@@ -38,8 +42,9 @@ class RoomType(models.Model):
 
 
 class Room(models.Model):
+    room_id = models.AutoField(primary_key=True)
     room_number = models.CharField(max_length=10, unique=True)
-    room_type = models.ForeignKey(RoomType, on_delete=models.CASCADE)
+    room_type = models.ForeignKey(RoomType, on_delete=models.CASCADE, db_column='room_type_id')
     capacity = models.PositiveIntegerField()
 
     def __str__(self):
@@ -47,7 +52,8 @@ class Room(models.Model):
 
 
 class Facility(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    facility_id = models.AutoField(primary_key=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, db_column='room_id')
     facility_name = models.CharField(max_length=100)
 
     def __str__(self):
@@ -55,6 +61,7 @@ class Facility(models.Model):
 
 
 class RoomFeature(models.Model):
+    room_feature_id = models.AutoField(primary_key=True)
     feature_name = models.CharField(max_length=100)
     feature_description = models.TextField(blank=True)
 
@@ -62,16 +69,21 @@ class RoomFeature(models.Model):
         return self.feature_name
 
 
-class RoomRoomFeature(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    feature = models.ForeignKey(RoomFeature, on_delete=models.CASCADE)
+class RoomFeatureLink(models.Model):
+    room_feature_link_id = models.AutoField(primary_key=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, db_column='room_id')
+    feature = models.ForeignKey(RoomFeature, on_delete=models.CASCADE, db_column='room_feature_id')
 
     class Meta:
+     
         unique_together = ('room', 'feature')
 
+    def __str__(self):
+        return f"{self.room.room_number} - {self.feature.feature_name}"
 
 # --- Booking System ---
 class Booking(models.Model):
+    booking_id = models.AutoField(primary_key=True)
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('approved', 'Approved'),
@@ -79,8 +91,8 @@ class Booking(models.Model):
         ('completed', 'Completed'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, db_column='room_id')
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -91,8 +103,9 @@ class Booking(models.Model):
 
 # --- Notifications and Logs ---
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True)
+    notification_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
+    booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True, db_column='booking_id')
     notification_message = models.TextField()
     notification_status = models.CharField(max_length=20, default='unread')
     notification_timestamp = models.DateTimeField(auto_now_add=True)
@@ -102,7 +115,8 @@ class Notification(models.Model):
 
 
 class ActionLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    action_log_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, db_column='user_id')
     action = models.CharField(max_length=255)
     action_timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -111,7 +125,8 @@ class ActionLog(models.Model):
 
 
 class RoomAvailability(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    room_availability_id = models.AutoField(primary_key=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, db_column='room_id')
     day_of_week = models.CharField(max_length=10)
     start_time = models.TimeField()
     end_time = models.TimeField()
@@ -123,6 +138,7 @@ class RoomAvailability(models.Model):
 
 # --- Optional Product Table ---
 class Product(models.Model):
+    product_id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=100)
     product_description = models.TextField(blank=True)
     product_price = models.DecimalField(max_digits=8, decimal_places=2)

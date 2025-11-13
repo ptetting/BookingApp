@@ -99,7 +99,7 @@ class LoginViewCustom(View):
                 user = User.objects.get(email=email)
                 # NOTE: simple plaintext check for now (improve with hashing later)
                 if user.password_hash == password:
-                    request.session['user_id'] = user.id
+                    request.session['user_id'] = user.user_id
                     request.session['user_name'] = user.name
                     messages.success(request, f"Welcome, {user.name}!")
                     return redirect('home')
