@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Booking (Admin) - Campus Study Room Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    nav a { margin-right: 12px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    form { margin-top: 16px; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
+    input, select, textarea { width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }
+    button { margin-top: 16px; padding: 10px 16px; background: #0078d7; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #005a9e; }
+    .muted { color: #777; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Create Booking (Admin)</h1>
+    <div>
+      {% if request.session.user_id %}
+        <p class="muted">
+          Welcome, {{ request.session.user_name }} |
+          <a href="{% url 'logout' %}">Logout</a>
+        </p>
+      {% endif %}
+    </div>
+  </header>
+
+  <nav>
+    <a href="{% url 'home' %}">Home</a>
+    <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+  </nav>
+
+  <section class="card">
+    <h2>New Booking</h2>
+
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit">Create Booking</button>
+    </form>
+  </section>
+
+</body>
+</html>

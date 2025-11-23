@@ -36,3 +36,31 @@ class BookingForm(forms.ModelForm):
 
             if start >= end:
                 raise ValidationError("End time must be after start time.")
+
+class AdminBookingForm(forms.ModelForm):
+    class Meta:
+        model = Booking
+        fields = ['user', 'room', 'start_time', 'end_time', 'status']
+        widgets = {
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        room = cleaned_data.get('room')
+        start = cleaned_data.get('start_time')
+        end = cleaned_data.get('end_time')
+
+        if room and start and end:
+            conflicts = Booking.objects.filter(
+                room=room,
+                start_time__lt=end,
+                end_time__gt=start,
+                status__in=['pending', 'approved']
+            )
+            if conflicts.exists():
+                raise ValidationError(f"{room} is already booked for this time range.")
+
+            if start >= end:
+                raise ValidationError("End time must be after start time.")

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>All Bookings - Campus Study Room Booking</title>
+  <title>User Home - Campus Study Room Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
@@ -34,20 +34,42 @@
   <nav>
     <a href="{% url 'home' %}">Home</a>
     <a href="{% url 'create_booking' %}">Create Booking</a>
-    <a href="{% url 'booking_list' %}">All Bookings</a>
-    {% if request.session.role_name == "Admin" %}
-      <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
-    {% endif %}
+    <!-- Admin links removed for user home -->
   </nav>
 
   <section class="card">
-    <h2>All Bookings</h2>
+    <h2>Available Rooms</h2>
+    {% if rooms %}
+      <table>
+        <thead>
+          <tr>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Capacity</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for room in rooms %}
+            <tr>
+              <td>{{ room.room_number }}</td>
+              <td>{{ room.room_type.room_type_name }}</td>
+              <td>{{ room.capacity }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No rooms available yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Your Bookings{% if today %} ({{ today }}){% endif %}</h2>
     {% if bookings %}
       <table>
         <thead>
           <tr>
             <th>Room</th>
-            <th>User</th>
             <th>Start</th>
             <th>End</th>
             <th>Status</th>
@@ -57,7 +79,6 @@
           {% for booking in bookings %}
             <tr>
               <td>{{ booking.room.room_number }}</td>
-              <td>{{ booking.user.name }}</td>
               <td>{{ booking.start_time }}</td>
               <td>{{ booking.end_time }}</td>
               <td>{{ booking.status|title }}</td>
@@ -66,7 +87,7 @@
         </tbody>
       </table>
     {% else %}
-      <p class="muted">No bookings yet.</p>
+      <p class="muted">You have no bookings yet.</p>
     {% endif %}
   </section>
 
