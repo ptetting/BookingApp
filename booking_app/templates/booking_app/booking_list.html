@@ -1,29 +1,74 @@
 <!DOCTYPE html>
-<html>
-<head><title>All Bookings</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>All Bookings - Campus Study Room Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    nav a { margin-right: 12px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
+    th { background: #f9f9f9; }
+    .muted { color: #777; }
+  </style>
+</head>
 <body>
-  <h1>All Bookings</h1>
-  <table border="1">
-    <tr>
-      <th>Room</th>
-      <th>User</th>
-      <th>Start</th>
-      <th>End</th>
-      <th>Status</th>
-    </tr>
-    {% for booking in bookings %}
-      <tr>
-        <td>{{ booking.room.room_number }}</td>
-        <td>{{ booking.user.name }}</td>
-        <td>{{ booking.start_time }}</td>
-        <td>{{ booking.end_time }}</td>
-        <td>{{ booking.status|title }}</td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">No bookings yet.</td></tr>
-    {% endfor %}
-  </table>
 
-  <p><a href="{% url 'home' %}">Back to Home</a></p>
+  <header>
+    <h1>Campus Study Room Booking</h1>
+    <div>
+      {% if request.session.user_id %}
+        <p class="muted">
+          Welcome, {{ request.session.user_name }} |
+          <a href="{% url 'logout' %}">Logout</a>
+        </p>
+      {% else %}
+        <a href="{% url 'login' %}">Login</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <nav>
+    <a href="{% url 'home' %}">Home</a>
+    <a href="{% url 'create_booking' %}">Create Booking</a>
+    <a href="{% url 'booking_list' %}">All Bookings</a>
+    {% if request.session.role_name == "Admin" %}
+      <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+    {% endif %}
+  </nav>
+
+  <section class="card">
+    <h2>All Bookings</h2>
+    {% if bookings %}
+      <table>
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>User</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for booking in bookings %}
+            <tr>
+              <td>{{ booking.room.room_number }}</td>
+              <td>{{ booking.user.name }}</td>
+              <td>{{ booking.start_time }}</td>
+              <td>{{ booking.end_time }}</td>
+              <td>{{ booking.status|title }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">No bookings yet.</p>
+    {% endif %}
+  </section>
+
 </body>
 </html>

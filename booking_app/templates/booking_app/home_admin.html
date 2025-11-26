@@ -1,0 +1,153 @@
+{% extends 'booking_app/base.html' %}
+
+{% block title %}Admin Home{% endblock %}
+
+{% block content %}
+<h2>Available Rooms</h2>
+{% if rooms_with_availability %}
+  {% for item in rooms_with_availability %}
+    <div class="card mb-3 p-3">
+      <h3>{{ item.room.room_number }} - {{ item.room.room_type.room_type_name }} (Capacity: {{ item.room.capacity }})</h3>
+
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Available?</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for avail in item.availability %}
+            <tr {% if not avail.is_available %}style="background-color:#f8d7da;"{% endif %}>
+              <td>{{ avail.start_time|date:"Y-m-d" }}</td>
+              <td>{{ avail.start_time|time:"H:i" }}</td>
+              <td>{{ avail.end_time|time:"H:i" }}</td>
+              <td style="color: {% if avail.is_available %}green{% else %}red{% endif %}; font-weight:bold;">
+                {% if avail.is_available %}Yes{% else %}No{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No rooms available. Add some in the admin panel.</p>
+{% endif %}
+
+<hr>
+
+<h2>Bookings</h2>
+
+<ul class="nav nav-tabs mb-3" id="bookingTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="past-tab" data-bs-toggle="tab" data-bs-target="#past" type="button">Past</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="today-tab" data-bs-toggle="tab" data-bs-target="#today" type="button">Today</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="future-tab" data-bs-toggle="tab" data-bs-target="#future" type="button">Future</button>
+  </li>
+</ul>
+
+<div class="tab-content">
+  <!-- Past Bookings -->
+  <div class="tab-pane fade show active" id="past">
+    {% if past_bookings %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in past_bookings %}
+            <tr>
+              <td>{{ item.booking.room.room_number }}</td>
+              <td>{{ item.booking.user.name }}</td>
+              <td>{{ item.date|date:"Y-m-d" }}</td>
+              <td>{{ item.booking.start_time|time:"H:i" }}</td>
+              <td>{{ item.booking.end_time|time:"H:i" }}</td>
+              <td>{{ item.booking.status|title }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No past bookings.</p>
+    {% endif %}
+  </div>
+
+  <!-- Today Bookings -->
+  <div class="tab-pane fade" id="today">
+    {% if today_bookings %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in today_bookings %}
+            <tr>
+              <td>{{ item.booking.room.room_number }}</td>
+              <td>{{ item.booking.user.name }}</td>
+              <td>{{ item.date|date:"Y-m-d" }}</td>
+              <td>{{ item.booking.start_time|time:"H:i" }}</td>
+              <td>{{ item.booking.end_time|time:"H:i" }}</td>
+              <td>{{ item.booking.status|title }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No bookings today.</p>
+    {% endif %}
+  </div>
+
+  <!-- Future Bookings -->
+  <div class="tab-pane fade" id="future">
+    {% if future_bookings %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>User</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in future_bookings %}
+            <tr>
+              <td>{{ item.booking.room.room_number }}</td>
+              <td>{{ item.booking.user.name }}</td>
+              <td>{{ item.date|date:"Y-m-d" }}</td>
+              <td>{{ item.booking.start_time|time:"H:i" }}</td>
+              <td>{{ item.booking.end_time|time:"H:i" }}</td>
+              <td>{{ item.booking.status|title }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No future bookings.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

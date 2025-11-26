@@ -1,35 +1,80 @@
+from datetime import date, datetime
 from django.contrib import messages
 from django.contrib.auth import logout  # we're using session auth, so logout is fine
 from django.shortcuts import render, redirect
 from django.views import View
-from datetime import date
+from django.views.decorators.cache import never_cache
+from django.utils.decorators import method_decorator
 
-from .forms import LoginForm, BookingForm  # ✅ import BookingForm
-from .models import User, Room, Booking
+from .forms import LoginForm, BookingForm, AdminBookingForm  # ✅ import BookingForm
+from .models import User, Room, Booking, RoomAvailability, Profile
 
 
 # ------------------ HOME ------------------
 
+@method_decorator(never_cache, name='dispatch')
 class HomeView(View):
-    template_name = 'booking_app/home.html'
+    template_name = 'booking_app/home_admin.html'
 
     def get(self, request):
-        # Require login for home
-        if not request.session.get('user_id'):
+        if not request.session.get('user_id') or request.session.get('role_name') != 'Admin':
             return redirect('login')
 
-        today = date.today()
+        today_date = date.today()
+
+        # Get all rooms and their availability
         rooms = Room.objects.all()
-        bookings = Booking.objects.filter(start_time__date=today)
-        return render(request, self.template_name, {
-            'rooms': rooms,
-            'bookings': bookings,
-            'today': today,
-        })
+        rooms_with_availability = []
+        for room in rooms:
+            availability = RoomAvailability.objects.filter(room=room).order_by('day_of_week', 'start_time')
+            # Optional: you can mark unavailable slots based on existing bookings here
+            for avail in availability:
+                overlapping_bookings = Booking.objects.filter(
+                    room=room,
+                    start_time__lt=avail.end_time,
+                    end_time__gt=avail.start_time,
+                    status='approved'
+                )
+                avail.is_available = not overlapping_bookings.exists()
+            rooms_with_availability.append({
+                'room': room,
+                'availability': availability
+            })
+
+        # Get all bookings
+        all_bookings = Booking.objects.all().order_by('start_time')
+
+        # Separate past, today, future bookings
+        past_bookings = [{
+            'booking': b,
+            'date': b.start_time.date()
+        } for b in all_bookings if b.end_time.date() < today_date]
+
+        today_bookings = [{
+            'booking': b,
+            'date': b.start_time.date()
+        } for b in all_bookings if b.start_time.date() <= today_date <= b.end_time.date()]
+
+        future_bookings = [{
+            'booking': b,
+            'date': b.start_time.date()
+        } for b in all_bookings if b.start_time.date() > today_date]
+
+        context = {
+            'rooms_with_availability': rooms_with_availability,
+            'past_bookings': past_bookings,
+            'today_bookings': today_bookings,
+            'future_bookings': future_bookings,
+            'today': today_date,
+        }
+
+        return render(request, self.template_name, context)
+
 
 
 # ------------------ BOOKINGS ------------------
 
+@method_decorator(never_cache, name='dispatch')
 class BookingCreateView(View):
     template_name = 'booking_app/create_booking.html'
 
@@ -47,13 +92,35 @@ class BookingCreateView(View):
         form = BookingForm(request.POST)
         if form.is_valid():
             booking = form.save(commit=False)
+            booking.user_id = request.session['user_id']  # auto-assign logged-in user
             booking.status = 'pending'
             booking.save()
             messages.success(request, "Booking submitted (pending).")
             return redirect('booking_list')
+
         return render(request, self.template_name, {'form': form})
 
+@method_decorator(never_cache, name='dispatch')
+class AdminBookingCreateView(View):
+    template_name = 'booking_app/admin_create_booking.html'
 
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = AdminBookingForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = AdminBookingForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Booking created by admin.")
+            return redirect('admin_dashboard')
+        return render(request, self.template_name, {'form': form})
+
+@method_decorator(never_cache, name='dispatch')
 class BookingListView(View):
     template_name = 'booking_app/booking_list.html'
 
@@ -61,31 +128,94 @@ class BookingListView(View):
         if not request.session.get('user_id'):
             return redirect('login')
 
-        bookings = Booking.objects.all().order_by('-start_time')
+        if request.session.get('role_name') != 'Admin':
+            bookings = Booking.objects.filter(user_id=request.session['user_id'])
+        else:
+            bookings = Booking.objects.all().order_by('-start_time')
+
         return render(request, self.template_name, {'bookings': bookings})
 
 
-# ------------------ ADMIN DASHBOARD ------------------
-
+@method_decorator(never_cache, name='dispatch')
 class AdminDashboardView(View):
     template_name = 'booking_app/admin_dashboard.html'
 
     def get(self, request):
         if not request.session.get('user_id'):
             return redirect('login')
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
 
         rooms = Room.objects.all()
         bookings = Booking.objects.all().order_by('start_time')
         return render(request, self.template_name, {'rooms': rooms, 'bookings': bookings})
 
+@method_decorator(never_cache, name='dispatch')
+class UpdateBookingStatusView(View):
+    def post(self, request, booking_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+
+        new_status = request.POST.get('status')
+        try:
+            booking = Booking.objects.get(booking_id=booking_id)
+            booking.status = new_status
+            booking.save()
+            messages.success(request, f"Booking {booking.booking_id} status updated to {new_status}.")
+        except Booking.DoesNotExist:
+            messages.error(request, "Booking not found.")
+
+        return redirect('admin_dashboard')
+
+
+# ------------------ BOOKING STATUS UPDATE (ADMIN ONLY) ------------------
+@method_decorator(never_cache, name='dispatch')
+class BookingStatusUpdateView(View):
+    def post(self, request, booking_id):
+        # Require login
+        if not request.session.get('user_id'):
+            return redirect('login')
+
+        try:
+            user = User.objects.get(user_id=request.session['user_id'])
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('login')
+
+        # Check if user is admin
+        if user.role.role_name != 'Admin':
+            messages.error(request, "You are not authorized to update bookings.")
+            return redirect('home')
+
+        # Get new status from POST
+        new_status = request.POST.get('status')  # e.g., 'approved', 'cancelled'
+
+        # Validate against model choices
+        valid_statuses = [choice[0] for choice in Booking.STATUS_CHOICES]
+
+        try:
+            booking = Booking.objects.get(booking_id=booking_id)
+            if new_status in valid_statuses:
+                booking.status = new_status
+                booking.save()
+                messages.success(request, f"Booking {booking.booking_id} status updated to {new_status}.")
+            else:
+                messages.error(request, "Invalid status.")
+        except Booking.DoesNotExist:
+            messages.error(request, "Booking not found.")
+
+        return redirect('admin_dashboard')
+
+
 
 # ------------------ LOGIN / LOGOUT ------------------
-
+@method_decorator(never_cache, name='dispatch')
 class LoginViewCustom(View):
     template_name = 'booking_app/login.html'
 
     def get(self, request):
-        # If already logged in, go home
+        # Clear any messages from previous sessions
+        list(messages.get_messages(request))
         if request.session.get('user_id'):
             return redirect('home')
         return render(request, self.template_name, {'form': LoginForm()})
@@ -97,22 +227,89 @@ class LoginViewCustom(View):
             password = form.cleaned_data['password']
             try:
                 user = User.objects.get(email=email)
-                # NOTE: simple plaintext check for now (improve with hashing later)
+                request.session['user_id'] = user.user_id
+                request.session['user_name'] = user.name
+                request.session['role_name'] = user.role.role_name  # <-- store role
+
                 if user.password_hash == password:
+                    # Clear any existing messages first
+                    storage = messages.get_messages(request)
+                    list(storage)
+
+                    # Log in user
                     request.session['user_id'] = user.user_id
                     request.session['user_name'] = user.name
+
+                    # Add welcome message
                     messages.success(request, f"Welcome, {user.name}!")
                     return redirect('home')
-                messages.error(request, "Invalid password.")
+                else:
+                    messages.error(request, "Invalid password.")
             except User.DoesNotExist:
                 messages.error(request, "User not found.")
         return render(request, self.template_name, {'form': form})
 
-
+@method_decorator(never_cache, name='dispatch')
 class LogoutViewCustom(View):
     def get(self, request):
-        # Clear Django auth session (safe even if not used) and our manual keys
         logout(request)
-        request.session.flush()
+        request.session.flush()  # clears session
+        storage = messages.get_messages(request)
+        list(storage)  # consume/clear old messages
         messages.info(request, "You have been logged out.")
         return redirect('login')
+
+
+
+@method_decorator(never_cache, name='dispatch')
+class EditProfileView(View):
+    template_name = 'booking_app/edit_profile.html'
+
+    def get(self, request):
+        if not request.session.get("user_id"):
+            return redirect("login")
+
+        user = User.objects.get(user_id=request.session["user_id"])
+        # Get or create the profile linked to this user
+        profile, created = Profile.objects.get_or_create(user=user)
+        return render(request, self.template_name, {"user": user, "profile": profile})
+
+    def post(self, request):
+        if not request.session.get("user_id"):
+            return redirect("login")
+
+        user = User.objects.get(user_id=request.session["user_id"])
+        profile, created = Profile.objects.get_or_create(user=user)
+
+        # Update User fields
+        name = request.POST.get("name")
+        if name:
+            user.name = name
+
+        email = request.POST.get("email")
+        if email:
+            user.email = email
+
+        new_password = request.POST.get("password")
+        if new_password:
+            user.password_hash = new_password  # hash if needed
+
+        user.save()
+
+        # Update Profile fields
+        address = request.POST.get("address")
+        if address:
+            profile.address = address
+
+        phone_number = request.POST.get("phone_number")
+        if phone_number:
+            profile.phone_number = phone_number
+
+        profile.save()
+
+        messages.success(request, "Profile updated successfully!")
+
+        # Update session name in navbar
+        request.session["user_name"] = user.name
+
+        return redirect("home")

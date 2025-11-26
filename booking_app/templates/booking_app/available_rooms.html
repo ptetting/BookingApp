@@ -1,0 +1,42 @@
+{% extends 'booking_app/base.html' %}
+
+{% block content %}
+<h2>Available Rooms (Today & Future)</h2>
+
+{% if rooms_data %}
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Capacity</th>
+            <th>Start Date/Time</th>
+            <th>End Date/Time</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for data in rooms_data %}
+        <tr>
+            <td>{{ data.room.room_number }}</td>
+            <td>{{ data.room.room_type.room_type_name }}</td>
+            <td>{{ data.room.capacity }}</td>
+            <td>{{ data.start_time }}</td>
+            <td>{{ data.end_time }}</td>
+            <td>
+                {% if role == 'Admin' %}
+                    <a href="{% url 'admin_create_booking' %}?room_id={{ data.room.room_id }}">Book</a>
+                {% else %}
+                    <a href="{% url 'create_booking' %}?room_id={{ data.room.room_id }}">Book</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No rooms are available for today or in the future.</p>
+{% endif %}
+
+<a href="{% url 'home' %}">Back to Home</a>
+{% endblock %}
