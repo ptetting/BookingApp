@@ -1,6 +1,26 @@
 from django import forms
 from django.core.exceptions import ValidationError
 from booking_app.models import Booking, Room
+from booking_app.models import Room, RoomType, User
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = ['room_number', 'room_type', 'capacity']
+
+
+class RoomTypeForm(forms.ModelForm):
+    class Meta:
+        model = RoomType
+        fields = ['room_type_name', 'room_type_description']
+
+
+class UserForm(forms.ModelForm):
+
+
+    class Meta:
+        model = User
+        fields = ['name', 'email', 'password_hash', 'role']
 
 
 class LoginForm(forms.Form):

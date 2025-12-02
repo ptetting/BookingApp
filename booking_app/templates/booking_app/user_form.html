@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ form_title }}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; }
+    h1 { text-align: center; }
+    form { max-width: 500px; margin: auto; }
+    label { display: block; margin-top: 15px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+    .btn { margin-top: 20px; padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; text-decoration: none; display: inline-block; text-align: center;}
+    .btn:hover { background-color: #0056b3; }
+    .btn-secondary { background-color: #6c757d; }
+    .btn-secondary:hover { background-color: #5a6268; }
+    .messages { max-width: 500px; margin: 20px auto; }
+    .messages li { color: green; }
+    .error { color: red; }
+    .form-buttons { display: flex; justify-content: space-between; max-width: 500px; margin: auto; }
+  </style>
+</head>
+<body>
+  <h1>{{ form_title }}</h1>
+
+  <div class="messages">
+    {% if messages %}
+      <ul>
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <label>{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+      {{ field }}
+      {% if field.errors %}
+        <div class="error">{{ field.errors|striptags }}</div>
+      {% endif %}
+    {% endfor %}
+
+    <div class="form-buttons">
+      <a href="{% url 'user_list' %}" class="btn btn-secondary">Back to List</a>
+      <button type="submit" class="btn">{{ submit_text }}</button>
+    </div>
+  </form>
+</body>
+</html>

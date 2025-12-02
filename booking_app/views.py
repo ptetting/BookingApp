@@ -6,8 +6,8 @@ from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from datetime import date
 
-from .forms import LoginForm, BookingForm, AdminBookingForm  # ✅ import BookingForm
-from .models import User, Room, Booking, Notification
+from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm  # ✅ import BookingForm
+from .models import User, Room, Booking, Notification, RoomType
 
 
 # ----------------- HELPER -----------------
@@ -172,7 +172,246 @@ class UpdateBookingStatusView(View):
             messages.info(request, "No status change detected.")
 
         return redirect('admin_dashboard')
+@method_decorator(never_cache, name='dispatch')
+class RoomListView(View):
+    template_name = 'booking_app/room_list.html'
 
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        rooms = Room.objects.all()
+        return render(request, self.template_name, {'rooms': rooms})
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomCreateView(View):
+    template_name = 'booking_app/room_form.html'
+
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = RoomForm()
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New Room',
+            'submit_text': 'Create Room',
+            'delete_url': None
+        })
+
+    def post(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = RoomForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Room created successfully.")
+            return redirect('room_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New Room',
+            'submit_text': 'Create Room',
+            'delete_url': None
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomUpdateView(View):
+    template_name = 'booking_app/room_form.html'
+
+    def get(self, request, room_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room = get_object_or_404(Room, id=room_id)
+        form = RoomForm(instance=room)
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit Room: {room.room_number}',
+            'submit_text': 'Update Room',
+            'delete_url': f'/rooms/{room.id}/delete/'
+        })
+
+    def post(self, request, room_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room = get_object_or_404(Room, id=room_id)
+        form = RoomForm(request.POST, instance=room)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Room updated successfully.")
+            return redirect('room_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit Room: {room.room_number}',
+            'submit_text': 'Update Room',
+            'delete_url': f'/rooms/{room.id}/delete/'
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomDeleteView(View):
+    def get(self, request, room_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room = get_object_or_404(Room, id=room_id)
+        room.delete()
+        messages.success(request, "Room deleted successfully.")
+        return redirect('room_list')
+
+@method_decorator(never_cache, name='dispatch')
+class RoomTypeListView(View):
+    template_name = 'booking_app/room_type_list.html'
+
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        types = RoomType.objects.all()
+        return render(request, self.template_name, {'types': types})
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomTypeCreateView(View):
+    template_name = 'booking_app/room_type_form.html'
+
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = RoomTypeForm()
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New Room Type',
+            'submit_text': 'Create Room Type',
+            'delete_url': None
+        })
+
+    def post(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        form = RoomTypeForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Room type created successfully.")
+            return redirect('room_type_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New Room Type',
+            'submit_text': 'Create Room Type',
+            'delete_url': None
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomTypeUpdateView(View):
+    template_name = 'booking_app/room_type_form.html'
+
+    def get(self, request, type_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room_type = get_object_or_404(RoomType, id=type_id)
+        form = RoomTypeForm(instance=room_type)
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit Room Type: {room_type.room_type_name}',
+            'submit_text': 'Update Room Type',
+            'delete_url': f'/room_types/{room_type.id}/delete/'
+        })
+
+    def post(self, request, type_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room_type = get_object_or_404(RoomType, id=type_id)
+        form = RoomTypeForm(request.POST, instance=room_type)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Room type updated successfully.")
+            return redirect('room_type_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit Room Type: {room_type.room_type_name}',
+            'submit_text': 'Update Room Type',
+            'delete_url': f'/room_types/{room_type.id}/delete/'
+        })
+
+
+@method_decorator(never_cache, name='dispatch')
+class RoomTypeDeleteView(View):
+    def get(self, request, type_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        room_type = get_object_or_404(RoomType, id=type_id)
+        room_type.delete()
+        messages.success(request, "Room type deleted successfully.")
+        return redirect('room_type_list')
+@method_decorator(never_cache, name='dispatch')
+class UserListView(View):
+    template_name = 'booking_app/user_list.html'
+
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+        users = User.objects.all()
+        return render(request, self.template_name, {'users': users})
+
+
+@method_decorator(never_cache, name='dispatch')
+class UserCreateView(View):
+    template_name = 'booking_app/user_form.html'
+
+    def get(self, request):
+        form = UserForm()
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New User',
+            'submit_text': 'Create User',
+            'delete_url': None
+        })
+
+    def post(self, request):
+        form = UserForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User created successfully.")
+            return redirect('user_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': 'Create New User',
+            'submit_text': 'Create User',
+            'delete_url': None
+        })
+@method_decorator(never_cache, name='dispatch')
+class UserUpdateView(View):
+    template_name = 'booking_app/user_form.html'
+
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        form = UserForm(instance=user)
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit User: {user.name}',
+            'submit_text': 'Update User',
+            'delete_url': f'/users/{user.id}/delete/'  # see next step
+        })
+
+    def post(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        form = UserForm(request.POST, instance=user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User updated successfully.")
+            return redirect('user_list')
+        return render(request, self.template_name, {
+            'form': form,
+            'form_title': f'Edit User: {user.name}',
+            'submit_text': 'Update User',
+            'delete_url': f'/users/{user.id}/delete/'
+        })
+
+@method_decorator(never_cache, name='dispatch')
+class UserDeleteView(View):
+    def get(self, request, user_id):
+        user = get_object_or_404(User, id=user_id)
+        user.delete()
+        messages.success(request, "User deleted successfully.")
+        return redirect('user_list')
 
 # ------------------ NOTIFICATIONS -------------------
 @method_decorator(never_cache, name='dispatch')
@@ -238,3 +477,4 @@ class LogoutViewCustom(View):
         list(storage)  # consume/clear old messages
         messages.info(request, "You have been logged out.")
         return redirect('login')
+
