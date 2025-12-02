@@ -1,0 +1,31 @@
+{% block content %}
+<h1>Create Booking</h1>
+
+{% if messages %}
+  <ul>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+<form method="post" style="max-width: 500px; margin: auto;">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" style="
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+  ">Submit Booking</button>
+</form>
+
+<div class="nav-links">
+  <a href="{% url 'home' %}" class="btn">Return Home</a>
+  <a href="{% url 'booking_list' %}" class="btn">Bookings</a>
+</div>
+
+{% endblock %}

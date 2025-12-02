@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Campus Study Room Booking</title>
+  <title>User Home - Campus Study Room Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
@@ -34,8 +34,8 @@
   <nav>
     <a href="{% url 'home' %}">Home</a>
     <a href="{% url 'create_booking' %}">Create Booking</a>
-    <a href="{% url 'booking_list' %}">All Bookings</a>
-    <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+    <a href="{% url 'notifications' %}">Notifications</a>
+    <!-- Admin links removed for user home -->
   </nav>
 
   <section class="card">
@@ -60,18 +60,17 @@
         </tbody>
       </table>
     {% else %}
-      <p class="muted">No rooms available yet. Add some in the admin panel.</p>
+      <p class="muted">No rooms available yet.</p>
     {% endif %}
   </section>
 
   <section class="card">
-    <h2>Today's Bookings{% if today %} ({{ today }}){% endif %}</h2>
+    <h2>Your Bookings{% if today %} ({{ today }}){% endif %}</h2>
     {% if bookings %}
       <table>
         <thead>
           <tr>
             <th>Room</th>
-            <th>User</th>
             <th>Start</th>
             <th>End</th>
             <th>Status</th>
@@ -81,7 +80,6 @@
           {% for booking in bookings %}
             <tr>
               <td>{{ booking.room.room_number }}</td>
-              <td>{{ booking.user.name }}</td>
               <td>{{ booking.start_time }}</td>
               <td>{{ booking.end_time }}</td>
               <td>{{ booking.status|title }}</td>
@@ -90,7 +88,7 @@
         </tbody>
       </table>
     {% else %}
-      <p class="muted">No bookings today.</p>
+      <p class="muted">You have no bookings yet.</p>
     {% endif %}
   </section>
 

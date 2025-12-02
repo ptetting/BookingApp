@@ -2,17 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>All Bookings - Campus Study Room Booking</title>
+  <title>Notifications - Campus Study Room Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     nav a { margin-right: 12px; }
     .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
-    th { background: #f9f9f9; }
     .muted { color: #777; }
+    ul.notifications { list-style: none; padding: 0; margin: 0; }
+    ul.notifications li {
+      border-bottom: 1px solid #eee;
+      padding: 12px 8px;
+    }
+    ul.notifications li:last-child { border-bottom: none; }
+    .success { background: #e6ffed; border-left: 4px solid #4caf50; padding: 8px; }
+    .error { background: #ffe6e6; border-left: 4px solid #f44336; padding: 8px; }
+    .info { background: #e6f0ff; border-left: 4px solid #2196f3; padding: 8px; }
   </style>
 </head>
 <body>
@@ -38,40 +44,31 @@
     {% else %}
       <a href="{% url 'create_booking' %}">Create Booking</a>
     {% endif %}
+    <a href="{% url 'booking_list' %}">All Bookings</a>
     {% if request.session.role_name == "Admin" %}
       <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
     {% endif %}
   </nav>
 
   <section class="card">
-    <h2>All Bookings</h2>
-    {% if bookings %}
-      <table>
-        <thead>
-          <tr>
-            <th>Room</th>
-            <th>User</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
-            <tr>
-              <td>{{ booking.room.room_number }}</td>
-              <td>{{ booking.user.name }}</td>
-              <td>{{ booking.start_time }}</td>
-              <td>{{ booking.end_time }}</td>
-              <td>{{ booking.status|title }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="muted">No bookings yet.</p>
-    {% endif %}
-  </section>
+  <h2>Your Notifications</h2>
+
+  {% if notifications %}
+    <ul class="notifications">
+      {% for n in notifications %}
+        <li class="info">
+          {{ n.notification_message }}
+          <span class="muted">— {{ n.notification_timestamp|date:"M d, Y H:i" }}</span>
+          {% if n.booking %}
+            <span class="muted">(Booking #{{ n.booking.id }})</span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">No notifications at the moment.</p>
+  {% endif %}
+</section>
 
 </body>
 </html>
