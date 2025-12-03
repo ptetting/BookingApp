@@ -1,31 +1,225 @@
 {% block content %}
-<h1>Create Booking</h1>
+<style>
+  :root {
+    --bg-gradient: linear-gradient(135deg, #1e3c72, #2a5298, #6dd5ed);
+    --card-bg: rgba(255, 255, 255, 0.96);
+    --primary: #1e88e5;
+    --accent: #00c9a7;
+    --text-main: #0f172a;
+    --text-muted: #6b7280;
+    --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.35);
+    --radius-xl: 18px;
+    --transition-fast: 0.18s ease-out;
+  }
 
-{% if messages %}
-  <ul>
-    {% for message in messages %}
-      <li>{{ message }}</li>
-    {% endfor %}
-  </ul>
-{% endif %}
+  .booking-page {
+    min-height: calc(100vh - 80px); /* room for header/footer if your base has them */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: var(--bg-gradient);
+    color: var(--text-main);
+  }
 
-<form method="post" style="max-width: 500px; margin: auto;">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" style="
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-  ">Submit Booking</button>
-</form>
+  .booking-card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--card-bg);
+    border-radius: var(--radius-xl);
+    padding: 22px 22px 20px;
+    box-shadow: var(--shadow-soft);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    position: relative;
+    overflow: hidden;
+  }
 
-<div class="nav-links">
-  <a href="{% url 'home' %}" class="btn">Return Home</a>
-  <a href="{% url 'booking_list' %}" class="btn">Bookings</a>
+  .booking-card::before {
+    content: "";
+    position: absolute;
+    inset: -60%;
+    background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 60%);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .booking-card h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .booking-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .booking-messages {
+    margin-bottom: 10px;
+  }
+
+  .booking-messages ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .booking-messages li {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: rgba(220, 38, 38, 0.06);
+    border: 1px solid rgba(220, 38, 38, 0.35);
+    color: #d32f2f;
+  }
+
+  .booking-card form p {
+    margin-bottom: 10px;
+  }
+
+  .booking-card label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .booking-card input,
+  .booking-card select,
+  .booking-card textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border-radius: 10px;
+    border: 1px solid #d1d5db;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.97);
+    transition: border-color var(--transition-fast),
+                box-shadow var(--transition-fast),
+                transform var(--transition-fast),
+                background-color var(--transition-fast);
+  }
+
+  .booking-card input:focus,
+  .booking-card select:focus,
+  .booking-card textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    background-color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .booking-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .booking-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: 0.02em;
+    transition: transform var(--transition-fast),
+                box-shadow var(--transition-fast),
+                background-color var(--transition-fast),
+                color var(--transition-fast),
+                border-color var(--transition-fast);
+  }
+
+  .booking-btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.4);
+  }
+
+  .booking-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(30, 64, 175, 0.48);
+  }
+
+  .booking-btn-primary:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 16px rgba(30, 64, 175, 0.38);
+  }
+
+  .booking-btn-secondary {
+    background: #f9fafb;
+    color: #111827;
+    border: 1px solid #d1d5db;
+  }
+
+  .booking-btn-secondary:hover {
+    background: #eef2ff;
+    border-color: #6366f1;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.25);
+    transform: translateY(-1px);
+  }
+
+  .booking-nav-links {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 640px) {
+    .booking-page {
+      padding: 18px 12px;
+    }
+
+    .booking-card {
+      padding: 20px 16px 16px;
+    }
+  }
+</style>
+
+<div class="booking-page">
+  <div class="booking-card">
+    <h1>Create Booking</h1>
+    <p class="booking-subtitle">Reserve a study room for your preferred time.</p>
+
+    <div class="booking-messages">
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="booking-actions">
+        <button type="submit" class="booking-btn booking-btn-primary">
+          Submit Booking
+        </button>
+
+        <div class="booking-nav-links">
+          <a href="{% url 'home' %}" class="booking-btn booking-btn-secondary">
+            Return Home
+          </a>
+          <a href="{% url 'booking_list' %}" class="booking-btn booking-btn-secondary">
+            View Bookings
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
-
 {% endblock %}

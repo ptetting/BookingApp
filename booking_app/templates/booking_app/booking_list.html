@@ -4,74 +4,258 @@
   <meta charset="UTF-8" />
   <title>All Bookings - Campus Study Room Booking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    nav a { margin-right: 12px; }
-    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    th, td { border: 1px solid #eee; padding: 8px; text-align: left; }
-    th { background: #f9f9f9; }
-    .muted { color: #777; }
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e3c72, #2a5298, #6dd5ed);
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --primary: #1e88e5;
+      --accent: #00c9a7;
+      --text-main: #0f172a;
+      --text-muted: #6b7280;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.35);
+      --radius-xl: 18px;
+      --transition-fast: 0.18s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+    }
+
+    .layout {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      color: #f9fafb;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .user-info {
+      font-size: 0.9rem;
+    }
+
+    .user-info a {
+      color: #facc15;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .user-info a:hover {
+      text-decoration: underline;
+    }
+
+    nav {
+      margin-bottom: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #f9fafb;
+      background: rgba(15, 23, 42, 0.22);
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      backdrop-filter: blur(6px);
+      transition: background-color var(--transition-fast),
+                  transform var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  border-color var(--transition-fast);
+    }
+
+    nav a:hover {
+      background: rgba(15, 23, 42, 0.38);
+      transform: translateY(-1px);
+      border-color: rgba(248, 250, 252, 0.9);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.45);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-xl);
+      padding: 20px 20px 18px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 60%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    tbody tr:hover {
+      background: #eef2ff;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .muted {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 18px 14px;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+
+      .card {
+        padding: 18px 16px 16px;
+      }
+
+      th, td {
+        white-space: nowrap;
+      }
+    }
   </style>
 </head>
+
 <body>
+  <div class="layout">
+    <header>
+      <h1>Campus Study Room Booking</h1>
+      <div class="user-info">
+        {% if request.session.user_id %}
+          <p class="muted">
+            Welcome, {{ request.session.user_name }} |
+            <a href="{% url 'logout' %}">Logout</a>
+          </p>
+        {% else %}
+          <a href="{% url 'login' %}">Login</a>
+        {% endif %}
+      </div>
+    </header>
 
-  <header>
-    <h1>Campus Study Room Booking</h1>
-    <div>
-      {% if request.session.user_id %}
-        <p class="muted">
-          Welcome, {{ request.session.user_name }} |
-          <a href="{% url 'logout' %}">Logout</a>
-        </p>
+    <nav>
+      <a href="{% url 'home' %}">Home</a>
+      {% if request.session.role_name == "Admin" %}
+        <a href="{% url 'admin_create_booking' %}">Create Booking</a>
+        <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
       {% else %}
-        <a href="{% url 'login' %}">Login</a>
+        <a href="{% url 'create_booking' %}">Create Booking</a>
       {% endif %}
-    </div>
-  </header>
+    </nav>
 
-  <nav>
-    <a href="{% url 'home' %}">Home</a>
-    {% if request.session.role_name == "Admin" %}
-      <a href="{% url 'admin_create_booking' %}">Create Booking</a>
-    {% else %}
-      <a href="{% url 'create_booking' %}">Create Booking</a>
-    {% endif %}
-    {% if request.session.role_name == "Admin" %}
-      <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
-    {% endif %}
-  </nav>
+    <section class="card">
+      <h2>All Bookings</h2>
+      <p class="card-subtitle">View all upcoming and past room bookings.</p>
 
-  <section class="card">
-    <h2>All Bookings</h2>
-    {% if bookings %}
-      <table>
-        <thead>
-          <tr>
-            <th>Room</th>
-            <th>User</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for booking in bookings %}
-            <tr>
-              <td>{{ booking.room.room_number }}</td>
-              <td>{{ booking.user.name }}</td>
-              <td>{{ booking.start_time }}</td>
-              <td>{{ booking.end_time }}</td>
-              <td>{{ booking.status|title }}</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <p class="muted">No bookings yet.</p>
-    {% endif %}
-  </section>
-
+      {% if bookings %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Room</th>
+                <th>User</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for booking in bookings %}
+                <tr>
+                  <td>{{ booking.room.room_number }}</td>
+                  <td>{{ booking.user.name }}</td>
+                  <td>{{ booking.start_time }}</td>
+                  <td>{{ booking.end_time }}</td>
+                  <td>{{ booking.status|title }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="muted">No bookings yet.</p>
+      {% endif %}
+    </section>
+  </div>
 </body>
 </html>

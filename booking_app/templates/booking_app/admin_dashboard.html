@@ -3,98 +3,443 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Dashboard - Campus Room Booking</title>
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    h1, h2 { text-align: center; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f0f0f0; }
-    .actions button { margin-right: 8px; }
-    .logout { float: right; }
-    .section { margin-top: 40px; }
-    select { padding: 4px; }
-    button { padding: 4px 8px; margin-left: 6px; }
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e3c72, #2a5298, #6dd5ed);
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --primary: #1e88e5;
+      --accent: #00c9a7;
+      --text-main: #0f172a;
+      --text-muted: #6b7280;
+      --danger: #d32f2f;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.35);
+      --radius-xl: 18px;
+      --transition-fast: 0.18s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      min-height: 100vh;
+      padding: 24px;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+    }
+
+    .layout {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      color: #f9fafb;
+    }
+
+    .brand-title {
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+      margin-top: 2px;
+    }
+
+    .nav-links {
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+
+    .nav-links a {
+      color: #facc15;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      text-decoration: underline;
+    }
+
+    .admin-actions {
+      text-align: center;
+      margin: 12px 0 22px;
+    }
+
+    .pill-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 16px;
+      margin: 4px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      background: rgba(15, 23, 42, 0.22);
+      color: #f9fafb;
+      font-size: 0.85rem;
+      text-decoration: none;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background-color var(--transition-fast),
+                  transform var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  border-color var(--transition-fast);
+    }
+
+    .pill-btn:hover {
+      background: rgba(15, 23, 42, 0.38);
+      transform: translateY(-1px);
+      border-color: rgba(248, 250, 252, 0.9);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.45);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-xl);
+      padding: 20px 20px 18px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 60%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .card-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .messages {
+      margin-bottom: 12px;
+    }
+
+    .messages ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .messages li {
+      font-size: 0.85rem;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: rgba(220, 38, 38, 0.06);
+      border: 1px solid rgba(220, 38, 38, 0.35);
+      color: var(--danger);
+    }
+
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+    }
+
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      white-space: nowrap;
+    }
+
+    th {
+      font-weight: 600;
+      color: #374151;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+
+    tbody tr:hover {
+      background: #eef2ff;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-form {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    select {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  transform var(--transition-fast);
+    }
+
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+      transform: translateY(-1px);
+    }
+
+    .btn-small {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #ffffff;
+      box-shadow: 0 7px 16px rgba(37, 99, 235, 0.4);
+      transition: transform var(--transition-fast),
+                  box-shadow var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .btn-small:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(30, 64, 175, 0.45);
+    }
+
+    .btn-small:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 12px rgba(30, 64, 175, 0.35);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: capitalize;
+    }
+
+    .badge-pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .badge-approved {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .badge-cancelled {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .badge-completed {
+      background: #e0f2fe;
+      color: #1d4ed8;
+    }
+
+    .muted {
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 18px 14px;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .card {
+        padding: 18px 16px 16px;
+      }
+
+      th, td {
+        white-space: nowrap;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <p class="nav-links">
-    <a href="{% url 'home' %}">Return Home</a> |
-    <a href="{% url 'logout' %}">Logout</a>
-  </p>
+  <div class="layout">
+    <header>
+      <div>
+        <div class="brand-title">Admin Dashboard</div>
+        <div class="brand-subtitle">Manage rooms, users, and bookings in one place.</div>
+      </div>
+      <p class="nav-links">
+        <a href="{% url 'home' %}">Return Home</a> |
+        <a href="{% url 'logout' %}">Logout</a>
+      </p>
+    </header>
 
-  <h1>Admin Dashboard</h1>
+    <div class="admin-actions">
+      <a href="{% url 'room_list' %}" class="pill-btn">Rooms</a>
+      <a href="{% url 'room_type_list' %}" class="pill-btn">Room Types</a>
+      <a href="{% url 'user_list' %}" class="pill-btn">Users</a>
+    </div>
 
-  <div class="admin-actions" style="text-align:center; margin-top:20px;">
-  <a href="{% url 'room_list' %}"><button>Rooms</button></a>
-  <a href="{% url 'room_type_list' %}"><button>Room Types</button></a>
-  <a href="{% url 'user_list' %}"><button>Users</button></a>
-</div>
-  {% if messages %}
-    <ul>
-      {% for message in messages %}
-        <li>{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+    <div class="messages">
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
 
-  <div class="section">
-    <h2>All Rooms</h2>
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Room Number</th>
-        <th>Room Type</th>
-        <th>Capacity</th>
-      </tr>
-      {% for room in rooms %}
-      <tr>
-        <td>{{ room.id }}</td>
-        <td>{{ room.room_number }}</td>
-        <td>{{ room.room_type.room_type_name }}</td>
-        <td>{{ room.capacity }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="4">No rooms found.</td></tr>
-      {% endfor %}
-    </table>
+    <!-- Rooms Section -->
+    <section class="card section">
+      <div class="card-header">
+        <h2>All Rooms</h2>
+        <span class="card-subtitle">Overview of every study room and capacity.</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Room Number</th>
+              <th>Room Type</th>
+              <th>Capacity</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for room in rooms %}
+            <tr>
+              <td>{{ room.id }}</td>
+              <td>{{ room.room_number }}</td>
+              <td>{{ room.room_type.room_type_name }}</td>
+              <td>{{ room.capacity }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="muted">No rooms found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Bookings Section -->
+    <section class="card section">
+      <div class="card-header">
+        <h2>All Bookings</h2>
+        <span class="card-subtitle">Review and update booking statuses.</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Room</th>
+              <th>User</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status / Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for booking in bookings %}
+            <tr>
+              <td>{{ booking.id }}</td>
+              <td>{{ booking.room.room_number }}</td>
+              <td>{{ booking.user.name }}</td>
+              <td>{{ booking.start_time }}</td>
+              <td>{{ booking.end_time }}</td>
+              <td>
+                <form method="post"
+                      action="{% url 'update_booking_status' booking.id %}"
+                      class="status-form">
+                  {% csrf_token %}
+                  <select name="status">
+                    <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if booking.status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                    <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                  </select>
+                  <button type="submit" class="btn-small">Update</button>
+                </form>
+                <div style="margin-top:4px;">
+                  {% if booking.status %}
+                    <span class="badge
+                      {% if booking.status == 'pending' %}badge-pending{% endif %}
+                      {% if booking.status == 'approved' %}badge-approved{% endif %}
+                      {% if booking.status == 'cancelled' %}badge-cancelled{% endif %}
+                      {% if booking.status == 'completed' %}badge-completed{% endif %}
+                    ">
+                      {{ booking.status }}
+                    </span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="muted">No bookings found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
-
-  <div class="section">
-    <h2>All Bookings</h2>
-    <table>
-      <tr>
-        <th>ID</th>
-        <th>Room</th>
-        <th>User</th>
-        <th>Start</th>
-        <th>End</th>
-        <th>Status</th>
-      </tr>
-      {% for booking in bookings %}
-      <tr>
-        <td>{{ booking.id }}</td>
-        <td>{{ booking.room.room_number }}</td>
-        <td>{{ booking.user.name }}</td>
-        <td>{{ booking.start_time }}</td>
-        <td>{{ booking.end_time }}</td>
-        <td>
-          <form method="post" action="{% url 'update_booking_status' booking.id %}">
-            {% csrf_token %}
-            <select name="status">
-              <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
-              <option value="approved" {% if booking.status == 'approved' %}selected{% endif %}>Approved</option>
-              <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-              <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
-            </select>
-            <button type="submit">Update</button>
-          </form>
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6">No bookings found.</td></tr>
-      {% endfor %}
-    </table>
-  </div>
-
 </body>
 </html>

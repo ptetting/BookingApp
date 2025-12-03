@@ -3,50 +3,223 @@
 <head>
   <meta charset="UTF-8">
   <title>{{ form_title }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; }
-    h1 { text-align: center; }
-    form { max-width: 500px; margin: auto; }
-    label { display: block; margin-top: 15px; }
-    input, select { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
-    .btn { margin-top: 20px; padding: 10px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; border-radius: 5px; text-decoration: none; display: inline-block; text-align: center;}
-    .btn:hover { background-color: #0056b3; }
-    .btn-secondary { background-color: #6c757d; }
-    .btn-secondary:hover { background-color: #5a6268; }
-    .messages { max-width: 500px; margin: 20px auto; }
-    .messages li { color: green; }
-    .error { color: red; }
-    .form-buttons { display: flex; justify-content: space-between; max-width: 500px; margin: auto; }
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e3c72, #2a5298, #6dd5ed);
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --primary: #1e88e5;
+      --accent: #00c9a7;
+      --text-main: #0f172a;
+      --text-muted: #6b7280;
+      --danger: #d32f2f;
+      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.35);
+      --radius-xl: 18px;
+      --transition-fast: 0.18s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      padding: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+    }
+
+    .card {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card-bg);
+      padding: 26px 26px 22px;
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(18px);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      position: relative;
+      overflow: hidden;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 60%);
+      z-index: -1;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #0f172a;
+    }
+
+    .messages {
+      margin-bottom: 14px;
+    }
+
+    .messages ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .messages li {
+      background: rgba(0, 150, 0, 0.08);
+      padding: 8px 12px;
+      border-left: 4px solid #16a34a;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+    }
+
+    .error {
+      color: var(--danger);
+      font-size: 0.82rem;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-top: 14px;
+      color: var(--text-muted);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 10px 12px;
+      margin-top: 5px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.96);
+      transition: border-color var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  transform var(--transition-fast),
+                  background-color var(--transition-fast);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.22);
+      background-color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .form-buttons {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 22px;
+      gap: 10px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 18px;
+      border-radius: 999px;
+      text-align: center;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform var(--transition-fast),
+                  box-shadow var(--transition-fast),
+                  background-color var(--transition-fast),
+                  color var(--transition-fast);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: white;
+      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 32px rgba(30, 64, 175, 0.45);
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+      border: 1px solid #d1d5db;
+    }
+
+    .btn-secondary:hover {
+      background: #f3f4f6;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 14px;
+      }
+
+      .card {
+        padding: 22px 18px;
+      }
+
+      .form-buttons {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <h1>{{ form_title }}</h1>
+  <div class="card">
+    <h1>{{ form_title }}</h1>
 
-  <div class="messages">
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-  </div>
-
-  <form method="post">
-    {% csrf_token %}
-
-    {% for field in form %}
-      <label>{{ field.label }}{% if field.field.required %}*{% endif %}</label>
-      {{ field }}
-      {% if field.errors %}
-        <div class="error">{{ field.errors|striptags }}</div>
+    <div class="messages">
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
       {% endif %}
-    {% endfor %}
-
-    <div class="form-buttons">
-      <a href="{% url 'room_list' %}" class="btn btn-secondary">Back to List</a>
-      <button type="submit" class="btn">{{ submit_text }}</button>
     </div>
-  </form>
+
+    <form method="post">
+      {% csrf_token %}
+
+      {% for field in form %}
+        <label>{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+        {{ field }}
+        {% if field.errors %}
+          <div class="error">{{ field.errors|striptags }}</div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="form-buttons">
+        <a href="{{ delete_url|default:'/room_list/' }}" class="btn btn-secondary">Back</a>
+        <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
+      </div>
+    </form>
+  </div>
 </body>
 </html>
