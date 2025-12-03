@@ -77,8 +77,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'campus_room_booking',
-        'USER': 'root',                  # or 'root'
-        'PASSWORD': 'admin',  # match what you set
+        'USER': 'django',
+        'PASSWORD': 'StrongPassword123!',
         'HOST': 'localhost',
         'PORT': '3306',
     }

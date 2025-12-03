@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Login - Campus Study Room Booking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>Create Account</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; }
     .container { max-width: 420px; margin: 0 auto; border: 1px solid #ddd; border-radius: 10px; padding: 20px; }
     .messages p { margin: 0 0 8px; color: #b00020; }
-    button, input { width: 100%; padding: 10px; margin-top: 8px; }
+    button, input, select { width: 100%; padding: 10px; margin-top: 8px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Login</h2>
+    <h2>Create Account</h2>
 
     <div class="messages">
       {% if messages %}
@@ -26,16 +26,12 @@
     <form method="post">
       {% csrf_token %}
       {{ form.as_p }}
-      <button type="submit">Login</button>
+      <button type="submit">Sign Up</button>
     </form>
 
-    <!-- New User button -->
-    <button type="button"
-            onclick="window.location.href='{% url 'register' %}'">
-      New Users Start Here
-    </button>
-
-    <p style="margin-top:12px;"><a href="{% url 'home' %}">Back to Home</a></p>
+    <p style="margin-top: 12px;">
+      <a href="{% url 'login' %}">Back to Login</a>
+    </p>
   </div>
 </body>
 </html>

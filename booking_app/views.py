@@ -5,8 +5,11 @@ from django.views import View
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from datetime import date
-
-from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm  # ✅ import BookingForm
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+from .models import User
+from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm, \
+    UserCreateForm  # ✅ import BookingForm
 from .models import User, Room, Booking, Notification, RoomType
 
 
@@ -478,3 +481,28 @@ class LogoutViewCustom(View):
         messages.info(request, "You have been logged out.")
         return redirect('login')
 
+
+
+@method_decorator(never_cache, name='dispatch')
+class RegisterView(View):
+    template_name = 'booking_app/register.html'  # matches your register.html
+
+    def get(self, request):
+        if request.session.get('user_id'):
+            return redirect('home')
+
+        form = UserCreateForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        if request.session.get('user_id'):
+            return redirect('home')
+
+        form = UserCreateForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Account created successfully. You can now log in.")
+            return redirect('login')
+
+        # If invalid, render again with errors
+        return render(request, self.template_name, {'form': form})

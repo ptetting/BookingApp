@@ -2,7 +2,7 @@ from django.urls import path
 from .views import HomeView, BookingCreateView, BookingListView, AdminDashboardView, LoginViewCustom, LogoutViewCustom, \
     AdminBookingCreateView, UpdateBookingStatusView, NotificationsView, RoomCreateView, RoomListView, RoomUpdateView, \
     RoomTypeListView, RoomTypeCreateView, UserListView, UserCreateView, UserUpdateView, UserDeleteView, \
-    RoomTypeUpdateView, RoomDeleteView, RoomTypeDeleteView
+    RoomTypeUpdateView, RoomDeleteView, RoomTypeDeleteView, RegisterView
 
 # ⚠️ NOTE: no app_name here, so you can use {% url 'booking_list' %} directly
 urlpatterns = [
@@ -29,5 +29,6 @@ urlpatterns = [
     path('users/new/', UserCreateView.as_view(), name='user_create'),
     path('users/<int:user_id>/edit/', UserUpdateView.as_view(), name='user_edit'),
     path('users/<int:user_id>/delete/', UserDeleteView.as_view(), name='user_delete'),
+    path('register/', RegisterView.as_view(), name='register'),
 ]
 
