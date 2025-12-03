@@ -17,7 +17,7 @@ class HomeView(View):
     template_name = 'booking_app/home_admin.html'
 
     def get(self, request):
-        if not request.session.get('user_id') or request.session.get('role_name') != 'Admin':
+        if not request.session.get('user_id'):
             return redirect('login')
 
         today_date = date.today()
@@ -41,30 +41,8 @@ class HomeView(View):
                 'availability': availability
             })
 
-        # Get all bookings
-        all_bookings = Booking.objects.all().order_by('start_time')
-
-        # Separate past, today, future bookings
-        past_bookings = [{
-            'booking': b,
-            'date': b.start_time.date()
-        } for b in all_bookings if b.end_time.date() < today_date]
-
-        today_bookings = [{
-            'booking': b,
-            'date': b.start_time.date()
-        } for b in all_bookings if b.start_time.date() <= today_date <= b.end_time.date()]
-
-        future_bookings = [{
-            'booking': b,
-            'date': b.start_time.date()
-        } for b in all_bookings if b.start_time.date() > today_date]
-
         context = {
             'rooms_with_availability': rooms_with_availability,
-            'past_bookings': past_bookings,
-            'today_bookings': today_bookings,
-            'future_bookings': future_bookings,
             'today': today_date,
         }
 
@@ -92,10 +70,21 @@ class BookingCreateView(View):
         form = BookingForm(request.POST)
         if form.is_valid():
             booking = form.save(commit=False)
-            booking.user_id = request.session['user_id']  # auto-assign logged-in user
-            booking.status = 'pending'
+            booking.user_id = request.session['user_id']  # assign logged-in user
+
+            if request.session.get('role_name') == 'Admin':
+                # Admin can select status manually
+                new_status = form.cleaned_data.get('status', 'Pending')
+                if new_status in ['Pending', 'Approved', 'Cancelled', 'Completed']:
+                    booking.status = new_status
+                else:
+                    booking.status = 'Pending'
+            else:
+                # Students always get pending
+                booking.status = 'Pending'
+
             booking.save()
-            messages.success(request, "Booking submitted (pending).")
+            messages.success(request, "Booking submitted successfully!")
             return redirect('booking_list')
 
         return render(request, self.template_name, {'form': form})
@@ -128,12 +117,38 @@ class BookingListView(View):
         if not request.session.get('user_id'):
             return redirect('login')
 
-        if request.session.get('role_name') != 'Admin':
-            bookings = Booking.objects.filter(user_id=request.session['user_id'])
-        else:
-            bookings = Booking.objects.all().order_by('-start_time')
+        today = date.today()
 
-        return render(request, self.template_name, {'bookings': bookings})
+        # Admin sees all bookings, users see their own
+        if request.session.get('role_name') != 'Admin':
+            all_bookings = Booking.objects.filter(user_id=request.session['user_id'])
+        else:
+            all_bookings = Booking.objects.all()
+
+        all_bookings = all_bookings.order_by('start_time')
+
+        # Categorize based on start_time & end_time
+        past_bookings = all_bookings.filter(
+            end_time__date__lt=today
+        )
+
+        today_bookings = all_bookings.filter(
+            start_time__date__lte=today,
+            end_time__date__gte=today
+        )
+
+        future_bookings = all_bookings.filter(
+            start_time__date__gt=today
+        )
+
+        context = {
+            "past_bookings": past_bookings,
+            "today_bookings": today_bookings,
+            "future_bookings": future_bookings,
+            "today": today
+        }
+
+        return render(request, self.template_name, context)
 
 
 @method_decorator(never_cache, name='dispatch')

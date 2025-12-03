@@ -89,36 +89,6 @@
       {% endfor %}
     </table>
   </div>
- <!-- ------------------- ROOM AVAILABILITY & FUTURE BOOKINGS ------------------- -->
-  <div class="section">
-    <h2>Room Availability & Future Bookings</h2>
-    {% for item in room_data %}
-      <h3>Room {{ item.room.room_number }} ({{ item.room.room_type.room_type_name }})</h3>
-      <p>Capacity: {{ item.room.capacity }}</p>
-
-      <h4>Available Slots:</h4>
-      {% if item.availabilities %}
-        <ul>
-          {% for slot in item.availabilities %}
-            <li>{{ slot.start_time }} - {{ slot.end_time }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No available slots</p>
-      {% endif %}
-
-      <h4>Future Bookings:</h4>
-      {% if item.bookings %}
-        <ul>
-          {% for booking in item.bookings %}
-            <li>{{ booking.start_time }} - {{ booking.end_time }} | Status: {{ booking.status|title }}</li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p>No future bookings</p>
-      {% endif %}
-      <hr>
-    {% endfor %}
-  </div>
+ 
 </body>
 </html>
