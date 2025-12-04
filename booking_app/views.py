@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from datetime import date
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from .models import User
+from .models import User, Profile
 from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm, \
     UserCreateForm  # ✅ import BookingForm
 from .models import User, Room, Booking, Notification, RoomType
@@ -506,3 +506,58 @@ class RegisterView(View):
 
         # If invalid, render again with errors
         return render(request, self.template_name, {'form': form})
+
+
+
+@method_decorator(never_cache, name='dispatch')
+class EditProfileView(View):
+    template_name = 'booking_app/edit_profile.html'
+
+    def get(self, request):
+        if not request.session.get("user_id"):
+            return redirect("login")
+
+        user = User.objects.get(id=request.session["user_id"])
+        # Get or create the profile linked to this user
+        profile, created = Profile.objects.get_or_create(user=user)
+        return render(request, self.template_name, {"user": user, "profile": profile})
+
+    def post(self, request):
+        if not request.session.get("user_id"):
+            return redirect("login")
+
+        user = User.objects.get(id=request.session["user_id"])
+        profile, created = Profile.objects.get_or_create(user=user)
+
+        # Update User fields
+        name = request.POST.get("name")
+        if name:
+            user.name = name
+
+        email = request.POST.get("email")
+        if email:
+            user.email = email
+
+        new_password = request.POST.get("password")
+        if new_password:
+            user.password_hash = new_password  # hash if needed
+
+        user.save()
+
+        # Update Profile fields
+        address = request.POST.get("address")
+        if address:
+            profile.address = address
+
+        phone_number = request.POST.get("phone_number")
+        if phone_number:
+            profile.phone_number = phone_number
+
+        profile.save()
+
+        messages.success(request, "Profile updated successfully!")
+
+        # Update session name in navbar
+        request.session["user_name"] = user.name
+
+        return redirect("home")

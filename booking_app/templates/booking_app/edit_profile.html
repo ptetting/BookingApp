@@ -1,0 +1,39 @@
+<form method="post">
+  {% csrf_token %}
+
+  <div class="nav-links mb-3">
+    <a href="{% url 'home' %}" class="btn btn-secondary">Return Home</a>
+  </div>
+
+  <div class="mb-3">
+    <label for="name" class="form-label">Name</label>
+    <input type="text" id="name" name="name" class="form-control" 
+           value="{{ user.name }}" style="width: 100%; max-width: 600px;">
+  </div>
+
+  <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+    <input type="email" id="email" name="email" class="form-control" 
+           value="{{ user.email }}" style="width: 100%; max-width: 600px;">
+  </div>
+
+  <div class="mb-3">
+    <label for="password" class="form-label">Password</label>
+    <input type="password" id="password" name="password" class="form-control" 
+           placeholder="Leave blank to keep current password" style="width: 100%; max-width: 600px;">
+  </div>
+
+  <div class="mb-3">
+    <label for="address" class="form-label">Address</label>
+    <textarea id="address" name="address" class="form-control" 
+              style="width: 100%; max-width: 600px; min-height: 60px; resize: vertical;">{{ profile.address }}</textarea>
+  </div>
+
+  <div class="mb-3">
+    <label for="phone_number" class="form-label">Phone Number</label>
+    <input type="text" id="phone_number" name="phone_number" class="form-control" 
+           value="{{ profile.phone_number }}" style="width: 100%; max-width: 600px;">
+  </div>
+
+  <button type="submit" class="btn btn-primary">Save Changes</button>
+</form>
