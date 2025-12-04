@@ -144,8 +144,8 @@ class ActionLog(models.Model):
 class RoomAvailability(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     day_of_week = models.CharField(max_length=10)
-    start_time = models.TimeField()
-    end_time = models.TimeField()
+    start_time = models.DateTimeField()   # changed from TimeField
+    end_time = models.DateTimeField()     # changed from TimeField
     is_available = models.BooleanField(default=True)
 
     class Meta:

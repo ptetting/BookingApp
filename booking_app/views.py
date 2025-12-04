@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from datetime import date
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from .models import User, Profile
+from .models import User, Profile,RoomAvailability
 from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm, \
     UserCreateForm  # ✅ import BookingForm
 from .models import User, Room, Booking, Notification, RoomType
@@ -46,34 +46,42 @@ def create_notifications_for_booking(action: str, booking):
 
 # ------------------ HOME ------------------
 
+
 @method_decorator(never_cache, name='dispatch')
 class HomeView(View):
+    template_name = 'booking_app/home_admin.html'
+
     def get(self, request):
         if not request.session.get('user_id'):
             return redirect('login')
 
-        today = date.today()
-        role = request.session.get('role_name')
+        today_date = date.today()
 
-        if role == 'Admin':
-            rooms = Room.objects.all()
-            bookings = Booking.objects.all().order_by('start_time')
-            return render(request, 'booking_app/home_admin.html', {
-                'rooms': rooms,
-                'bookings': bookings,
-                'today': today,
-            })
-        else:
-            rooms = Room.objects.all()
-            bookings = Booking.objects.filter(
-                user_id=request.session['user_id']
-            ).order_by('-start_time')
-            return render(request, 'booking_app/home_user.html', {
-                'rooms': rooms,
-                'bookings': bookings,
-                'today': today,
+        # Get all rooms and their availability
+        rooms = Room.objects.all()
+        rooms_with_availability = []
+        for room in rooms:
+            availability = RoomAvailability.objects.filter(room=room).order_by('day_of_week', 'start_time')
+            # Optional: you can mark unavailable slots based on existing bookings here
+            for avail in availability:
+                overlapping_bookings = Booking.objects.filter(
+                    room=room,
+                    start_time__lt=avail.end_time,
+                    end_time__gt=avail.start_time,
+                    status='approved'
+                )
+                avail.is_available = not overlapping_bookings.exists()
+            rooms_with_availability.append({
+                'room': room,
+                'availability': availability
             })
 
+        context = {
+            'rooms_with_availability': rooms_with_availability,
+            'today': today_date,
+        }
+
+        return render(request, self.template_name, context)
 
 
 # ------------------ BOOKINGS ------------------
