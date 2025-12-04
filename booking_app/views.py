@@ -143,12 +143,39 @@ class BookingListView(View):
         if not request.session.get('user_id'):
             return redirect('login')
 
-        if request.session.get('role_name') != 'Admin':
-            bookings = Booking.objects.filter(user_id=request.session['user_id'])
-        else:
-            bookings = Booking.objects.all().order_by('-start_time')
+        today = date.today()
 
-        return render(request, self.template_name, {'bookings': bookings})
+        # Admin sees all bookings, users see their own
+        if request.session.get('role_name') != 'Admin':
+            all_bookings = Booking.objects.filter(user_id=request.session['user_id'])
+        else:
+            all_bookings = Booking.objects.all()
+
+        all_bookings = all_bookings.order_by('start_time')
+
+        # Categorize based on start_time & end_time
+        past_bookings = all_bookings.filter(
+            end_time__date__lt=today
+        )
+
+        today_bookings = all_bookings.filter(
+            start_time__date__lte=today,
+            end_time__date__gte=today
+        )
+
+        future_bookings = all_bookings.filter(
+            start_time__date__gt=today
+        )
+
+        context = {
+            "past_bookings": past_bookings,
+            "today_bookings": today_bookings,
+            "future_bookings": future_bookings,
+            "today": today
+        }
+
+        return render(request, self.template_name, context)
+
 
 
 # ------------------ ADMIN DASHBOARD ------------------
