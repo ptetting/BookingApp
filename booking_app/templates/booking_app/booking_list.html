@@ -4,22 +4,7 @@
 
 {% block content %}
 
-<nav>
-      <a href="{% url 'home' %}">Home</a>
-      {% if request.session.role_name == "Admin" %}
-        <a href="{% url 'admin_create_booking' %}">Create Booking</a>
-        <a href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
-      {% else %}
-        <a href="{% url 'create_booking' %}">Create Booking</a>
-      {% endif %}
-    </nav>
-    
-
   <div class="container">
-
-   <div class="nav-links">
-  <a href="{% url 'home' %}" class="btn">Return Home</a>
-    </div>
 
     <!-- Tabs -->
     <ul class="nav nav-tabs mb-3" id="bookingTabs" role="tablist">

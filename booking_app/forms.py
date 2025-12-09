@@ -46,6 +46,10 @@ class BookingForm(forms.ModelForm):
 
         if room and start and end:
             # Prevent past bookings
+            if start and timezone.is_naive(start):
+                start = timezone.make_aware(start)
+            if end and timezone.is_naive(end):
+                end = timezone.make_aware(end)
             if start < timezone.now():
                 raise ValidationError("Start time cannot be in the past.")
             if end < timezone.now():

@@ -236,6 +236,7 @@ class DeleteBookingView(View):
 
         booking = get_object_or_404(Booking, id=booking_id)
         messages.success(request, f"Booking {booking.id} deleted successfully.")
+        log_action(request, f"Deleted booking #{booking.id}")
         booking.delete()
         return redirect('admin_dashboard')
 
