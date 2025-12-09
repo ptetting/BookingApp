@@ -1,4 +1,5 @@
 from django import forms
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from booking_app.models import Booking, Room, Role
 from booking_app.models import Room, RoomType, User
@@ -44,6 +45,12 @@ class BookingForm(forms.ModelForm):
         end = cleaned_data.get('end_time')
 
         if room and start and end:
+            # Prevent past bookings
+            if start < timezone.now():
+                raise ValidationError("Start time cannot be in the past.")
+            if end < timezone.now():
+                raise ValidationError("End time cannot be in the past.")
+
             # Check for overlapping bookings
             conflicts = Booking.objects.filter(
                 room=room,
@@ -73,6 +80,12 @@ class AdminBookingForm(forms.ModelForm):
         end = cleaned_data.get('end_time')
 
         if room and start and end:
+            # Prevent past bookings
+            if start < timezone.now():
+                raise ValidationError("Start time cannot be in the past.")
+            if end < timezone.now():
+                raise ValidationError("End time cannot be in the past.")
+
             conflicts = Booking.objects.filter(
                 room=room,
                 start_time__lt=end,

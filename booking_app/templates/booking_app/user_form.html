@@ -19,11 +19,7 @@
       --transition-fast: 0.18s ease-out;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: system-ui, Arial, sans-serif;
@@ -70,15 +66,8 @@
       color: #0f172a;
     }
 
-    .messages {
-      margin-bottom: 14px;
-    }
-
-    .messages ul {
-      list-style: none;
-      padding-left: 0;
-    }
-
+    .messages { margin-bottom: 14px; }
+    .messages ul { list-style: none; padding-left: 0; }
     .messages li {
       background: rgba(0, 150, 0, 0.08);
       padding: 8px 12px;
@@ -103,9 +92,7 @@
       color: var(--text-muted);
     }
 
-    input,
-    select,
-    textarea {
+    input, select, textarea {
       width: 100%;
       padding: 10px 12px;
       margin-top: 5px;
@@ -119,9 +106,7 @@
                   background-color var(--transition-fast);
     }
 
-    input:focus,
-    select:focus,
-    textarea:focus {
+    input:focus, select:focus, textarea:focus {
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.22);
       background-color: #fff;
@@ -175,17 +160,9 @@
     }
 
     @media (max-width: 520px) {
-      body {
-        padding: 14px;
-      }
-
-      .card {
-        padding: 22px 18px;
-      }
-
-      .form-buttons {
-        flex-direction: column;
-      }
+      body { padding: 14px; }
+      .card { padding: 22px 18px; }
+      .form-buttons { flex-direction: column; }
     }
   </style>
 </head>
@@ -216,7 +193,7 @@
       {% endfor %}
 
       <div class="form-buttons">
-        <a href="{% url 'room_list' %}" class="btn btn-secondary">Back</a>
+        <a href="{% url 'user_list' %}" class="btn btn-secondary">Back</a>
         <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
       </div>
     </form>

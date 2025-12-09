@@ -405,29 +405,22 @@
               <td>{{ booking.start_time }}</td>
               <td>{{ booking.end_time }}</td>
               <td>
-                <form method="post"
-                      action="{% url 'update_booking_status' booking.id %}"
-                      class="status-form">
-                  {% csrf_token %}
-                  <select name="status">
-                    <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
-                    <option value="approved" {% if booking.status == 'approved' %}selected{% endif %}>Approved</option>
-                    <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-                    <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
-                  </select>
-                  <button type="submit" class="btn-small">Update</button>
-                </form>
-                <div style="margin-top:4px;">
-                  {% if booking.status %}
-                    <span class="badge
-                      {% if booking.status == 'pending' %}badge-pending{% endif %}
-                      {% if booking.status == 'approved' %}badge-approved{% endif %}
-                      {% if booking.status == 'cancelled' %}badge-cancelled{% endif %}
-                      {% if booking.status == 'completed' %}badge-completed{% endif %}
-                    ">
-                      {{ booking.status }}
-                    </span>
-                  {% endif %}
+                <div class="status-form" style="display:flex; gap:6px; align-items:center;">
+                  <form method="post" action="{% url 'update_booking_status' booking.id %}">
+                    {% csrf_token %}
+                    <select name="status">
+                      <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                      <option value="approved" {% if booking.status == 'approved' %}selected{% endif %}>Approved</option>
+                      <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                      <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                    <button type="submit" class="btn-small">Update</button>
+                  </form>
+
+                  <form method="post" action="{% url 'delete_booking' booking.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-small" style="background:#d32f2f;">Delete</button>
+                  </form>
                 </div>
               </td>
             </tr>

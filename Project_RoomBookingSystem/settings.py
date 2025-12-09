@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+from django.conf.global_settings import AUTH_USER_MODEL
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,6 +28,9 @@ SECRET_KEY = 'django-insecure-4ai0j@hy%w=z8sje2@xj69i-g1qoz%nex)b5@9jk0dw_g9y7gt
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+TIME_ZONE = 'America/Chicago'
+USE_TZ = True
 
 
 # Application definition
@@ -76,16 +81,13 @@ WSGI_APPLICATION = 'Project_RoomBookingSystem.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'campus_room_booking_01',
+        'NAME': 'campus_room_booking',
         'USER': 'root',
         'PASSWORD': 'admin',
         'HOST': 'localhost',
         'PORT': '3306',
     }
 }
-
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
