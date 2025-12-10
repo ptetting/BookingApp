@@ -2,16 +2,28 @@ from django.contrib import messages
 from django.contrib.auth import logout  # we're using session auth, so logout is fine
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
+from django.db import transaction
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
-from datetime import date
+from datetime import date, datetime
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from .models import User, Profile,RoomAvailability
+from .models import User, Profile,RoomAvailability, ActionLog
 from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm, \
-    UserCreateForm  # ✅ import BookingForm
+    UserCreateForm, RoomAvailabilityFormSet  # ✅ import BookingForm
 from .models import User, Room, Booking, Notification, RoomType
+from django.utils import timezone
 
+
+DAYS = [
+    ('Mon', 'Monday'),
+    ('Tue', 'Tuesday'),
+    ('Wed', 'Wednesday'),
+    ('Thu', 'Thursday'),
+    ('Fri', 'Friday'),
+    ('Sat', 'Saturday'),
+    ('Sun', 'Sunday'),
+]
 
 # ----------------- HELPER -----------------
 def create_notifications_for_booking(action: str, booking):
@@ -44,9 +56,33 @@ def create_notifications_for_booking(action: str, booking):
     ])
 
 
+def log_action(request, action_description: str):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return  # ignore logs when not logged in
+
+    ActionLog.objects.create(
+        user_id=user_id,
+        action=action_description
+    )
+
+
+def manage_availability(request):
+    days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    queryset = RoomAvailability.objects.filter(day_of_week__in=days)
+
+    if request.method == 'POST':
+        formset = RoomAvailabilityFormSet(request.POST, queryset=queryset)
+        if formset.is_valid():
+            formset.save()
+            return redirect('room_list')
+    else:
+        formset = RoomAvailabilityFormSet(queryset=queryset)
+
+    return render(request, 'booking_app/manage_availability.html', {'formset': formset, 'days': days})
+
+
 # ------------------ HOME ------------------
-
-
 @method_decorator(never_cache, name='dispatch')
 class HomeView(View):
     template_name = 'booking_app/home_admin.html'
@@ -57,31 +93,22 @@ class HomeView(View):
 
         today_date = date.today()
 
-        # Get all rooms and their availability
-        rooms = Room.objects.all()
         rooms_with_availability = []
-        for room in rooms:
-            availability = RoomAvailability.objects.filter(room=room).order_by('day_of_week', 'start_time')
-            # Optional: you can mark unavailable slots based on existing bookings here
-            for avail in availability:
-                overlapping_bookings = Booking.objects.filter(
-                    room=room,
-                    start_time__lt=avail.end_time,
-                    end_time__gt=avail.start_time,
-                    status='approved'
-                )
-                avail.is_available = not overlapping_bookings.exists()
+        for room in Room.objects.all():
+            # Get all availability rows for this room (no need to override is_available)
+            availability = RoomAvailability.objects.filter(room=room)
+
             rooms_with_availability.append({
                 'room': room,
                 'availability': availability
             })
 
-        context = {
+        return render(request, self.template_name, {
             'rooms_with_availability': rooms_with_availability,
             'today': today_date,
-        }
+        })
 
-        return render(request, self.template_name, context)
+
 
 
 # ------------------ BOOKINGS ------------------
@@ -108,6 +135,7 @@ class BookingCreateView(View):
             booking.status = 'pending'
             booking.save()
 
+            log_action(request, f"Created booking #{booking.id}")
             messages.success(request, "Booking submitted (pending).")
             create_notifications_for_booking("created", booking)
             return redirect('booking_list')
@@ -130,6 +158,8 @@ class AdminBookingCreateView(View):
         form = AdminBookingForm(request.POST)
         if form.is_valid():
             booking = form.save()
+
+            log_action(request, f"Admin created booking #{booking.id}")
             messages.success(request, "Booking created by admin.")
             create_notifications_for_booking("created by admin", booking)
             return redirect('admin_dashboard')
@@ -153,19 +183,13 @@ class BookingListView(View):
 
         all_bookings = all_bookings.order_by('start_time')
 
-        # Categorize based on start_time & end_time
-        past_bookings = all_bookings.filter(
-            end_time__date__lt=today
-        )
+        # Filter out bookings with missing start or end times
+        all_bookings = all_bookings.exclude(start_time__isnull=True).exclude(end_time__isnull=True)
 
-        today_bookings = all_bookings.filter(
-            start_time__date__lte=today,
-            end_time__date__gte=today
-        )
-
-        future_bookings = all_bookings.filter(
-            start_time__date__gt=today
-        )
+        # Categorize bookings safely
+        past_bookings = all_bookings.filter(end_time__date__lt=today)
+        today_bookings = all_bookings.filter(start_time__date__lte=today, end_time__date__gte=today)
+        future_bookings = all_bookings.filter(start_time__date__gt=today)
 
         context = {
             "past_bookings": past_bookings,
@@ -204,12 +228,26 @@ class UpdateBookingStatusView(View):
         if new_status and new_status != booking.status:
             booking.status = new_status
             booking.save()
+
+            log_action(request, f"Updated booking #{booking.id} status to {new_status}")
             messages.success(request, f"Booking {booking.id} status updated to {new_status}.")
             create_notifications_for_booking(f"updated to {new_status}", booking)
         else:
             messages.info(request, "No status change detected.")
 
         return redirect('admin_dashboard')
+
+class DeleteBookingView(View):
+    def post(self, request, booking_id):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+
+        booking = get_object_or_404(Booking, id=booking_id)
+        messages.success(request, f"Booking {booking.id} deleted successfully.")
+        log_action(request, f"Deleted booking #{booking.id}")
+        booking.delete()
+        return redirect('admin_dashboard')
+
 @method_decorator(never_cache, name='dispatch')
 class RoomListView(View):
     template_name = 'booking_app/room_list.html'
@@ -223,33 +261,49 @@ class RoomListView(View):
 
 @method_decorator(never_cache, name='dispatch')
 class RoomCreateView(View):
-    template_name = 'booking_app/room_form.html'
-
-    def get(self, request):
-        if request.session.get('role_name') != 'Admin':
-            return redirect('home')
-        form = RoomForm()
-        return render(request, self.template_name, {
-            'form': form,
-            'form_title': 'Create New Room',
-            'submit_text': 'Create Room',
-            'delete_url': None
+    def get(self, request, *args, **kwargs):
+        room_form = RoomForm()
+        formset = RoomAvailabilityFormSet(queryset=RoomAvailability.objects.none())
+        return render(request, 'booking_app/room_form.html', {
+            'room_form': room_form,
+            'availability_formset': formset,
+            'form_title': "Create Room",
+            'submit_text': "Create Room"
         })
 
-    def post(self, request):
-        if request.session.get('role_name') != 'Admin':
-            return redirect('home')
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Room created successfully.")
+    def post(self, request, *args, **kwargs):
+        room_form = RoomForm(request.POST)
+        formset = RoomAvailabilityFormSet(request.POST, queryset=RoomAvailability.objects.none())
+
+        if room_form.is_valid() and formset.is_valid():
+            room = room_form.save()
+            for form in formset.forms:
+                if not form.cleaned_data:
+                    continue  # skip empty rows
+                start = form.cleaned_data.get('start_time')
+                end = form.cleaned_data.get('end_time')
+                day = form.cleaned_data.get('day_of_week')
+
+                # Only save if times are provided
+                if start and end:
+                    RoomAvailability.objects.create(
+                        room=room,
+                        day_of_week=day,
+                        start_time=start,
+                        end_time=end,
+                        is_available=True
+                    )
+                # If no times, skip (treated as unavailable)
+
             return redirect('room_list')
-        return render(request, self.template_name, {
-            'form': form,
-            'form_title': 'Create New Room',
-            'submit_text': 'Create Room',
-            'delete_url': None
+
+        return render(request, 'booking_app/room_form.html', {
+            'room_form': room_form,
+            'availability_formset': formset,
+            'form_title': "Create Room",
+            'submit_text': "Create Room"
         })
+
 
 
 @method_decorator(never_cache, name='dispatch')
@@ -274,14 +328,15 @@ class RoomUpdateView(View):
         room = get_object_or_404(Room, id=room_id)
         form = RoomForm(request.POST, instance=room)
         if form.is_valid():
-            form.save()
+            updated = form.save()
+
+            log_action(request, f"Updated room {updated.room_number}")
             messages.success(request, "Room updated successfully.")
             return redirect('room_list')
         return render(request, self.template_name, {
             'form': form,
             'form_title': f'Edit Room: {room.room_number}',
             'submit_text': 'Update Room',
-            'delete_url': f'/rooms/{room.id}/delete/'
         })
 
 
@@ -291,7 +346,10 @@ class RoomDeleteView(View):
         if request.session.get('role_name') != 'Admin':
             return redirect('home')
         room = get_object_or_404(Room, id=room_id)
+        room_number = room.room_number
         room.delete()
+
+        log_action(request, f"Deleted room {room_number}")
         messages.success(request, "Room deleted successfully.")
         return redirect('room_list')
 
@@ -326,7 +384,9 @@ class RoomTypeCreateView(View):
             return redirect('home')
         form = RoomTypeForm(request.POST)
         if form.is_valid():
-            form.save()
+            room_type = form.save()
+
+            log_action(request, f"Created room type {room_type.room_type_name}")
             messages.success(request, "Room type created successfully.")
             return redirect('room_type_list')
         return render(request, self.template_name, {
@@ -359,7 +419,9 @@ class RoomTypeUpdateView(View):
         room_type = get_object_or_404(RoomType, id=type_id)
         form = RoomTypeForm(request.POST, instance=room_type)
         if form.is_valid():
-            form.save()
+            updated = form.save()
+
+            log_action(request, f"Updated room type {updated.room_type_name}")
             messages.success(request, "Room type updated successfully.")
             return redirect('room_type_list')
         return render(request, self.template_name, {
@@ -376,9 +438,14 @@ class RoomTypeDeleteView(View):
         if request.session.get('role_name') != 'Admin':
             return redirect('home')
         room_type = get_object_or_404(RoomType, id=type_id)
+        room_type_name = room_type.room_type_name
         room_type.delete()
+
+        log_action(request, f"Deleted room type {room_type_name}")
         messages.success(request, "Room type deleted successfully.")
         return redirect('room_type_list')
+
+
 @method_decorator(never_cache, name='dispatch')
 class UserListView(View):
     template_name = 'booking_app/user_list.html'
@@ -406,7 +473,9 @@ class UserCreateView(View):
     def post(self, request):
         form = UserForm(request.POST)
         if form.is_valid():
-            form.save()
+            new_user = form.save()
+
+            log_action(request, f"Created user {new_user.name}")
             messages.success(request, "User created successfully.")
             return redirect('user_list')
         return render(request, self.template_name, {
@@ -433,7 +502,9 @@ class UserUpdateView(View):
         user = get_object_or_404(User, id=user_id)
         form = UserForm(request.POST, instance=user)
         if form.is_valid():
-            form.save()
+            updated_user = form.save()
+
+            log_action(request, f"Updated user {updated_user.name}")
             messages.success(request, "User updated successfully.")
             return redirect('user_list')
         return render(request, self.template_name, {
@@ -447,7 +518,9 @@ class UserUpdateView(View):
 class UserDeleteView(View):
     def get(self, request, user_id):
         user = get_object_or_404(User, id=user_id)
+        name = user.name
         user.delete()
+        log_action(request, f"Deleted user {name}")
         messages.success(request, "User deleted successfully.")
         return redirect('user_list')
 
@@ -596,3 +669,17 @@ class EditProfileView(View):
         request.session["user_name"] = user.name
 
         return redirect("home")
+
+
+# ------------------ AUDIT LOG ------------------
+@method_decorator(never_cache, name='dispatch')
+class AuditLogView(View):
+    template_name = 'booking_app/audit_log.html'
+
+    def get(self, request):
+        if request.session.get('role_name') != 'Admin':
+            return redirect('home')
+
+        logs = ActionLog.objects.select_related('user').order_by('-action_timestamp')
+
+        return render(request, self.template_name, {'logs': logs})

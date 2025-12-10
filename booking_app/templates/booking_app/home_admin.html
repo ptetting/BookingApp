@@ -12,21 +12,17 @@
       <table class="table table-bordered">
         <thead>
           <tr>
-            <th>Date</th>
+            <th>Day</th>
             <th>Start</th>
             <th>End</th>
-            <th>Available?</th>
           </tr>
         </thead>
         <tbody>
           {% for avail in item.availability %}
-            <tr {% if not avail.is_available %}style="background-color:#f8d7da;"{% endif %}>
-              <td>{{ avail.start_time|date:"Y-m-d" }}</td>
+            <tr>
+              <td>{{ avail.get_day_of_week_display }}</td>
               <td>{{ avail.start_time|time:"H:i" }}</td>
               <td>{{ avail.end_time|time:"H:i" }}</td>
-              <td style="color: {% if avail.is_available %}green{% else %}red{% endif %}; font-weight:bold;">
-                {% if avail.is_available %}Yes{% else %}No{% endif %}
-              </td>
             </tr>
           {% endfor %}
         </tbody>
@@ -36,6 +32,4 @@
 {% else %}
   <p>No rooms available. Add some in the admin panel.</p>
 {% endif %}
-
-
 {% endblock %}

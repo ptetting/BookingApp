@@ -143,16 +143,27 @@ class ActionLog(models.Model):
 
 class RoomAvailability(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    day_of_week = models.CharField(max_length=10)
-    start_time = models.DateTimeField()   # changed from TimeField
-    end_time = models.DateTimeField()     # changed from TimeField
+    day_of_week = models.CharField(
+        max_length=10,
+        choices=[
+            ('Monday', 'Monday'),
+            ('Tuesday', 'Tuesday'),
+            ('Wednesday', 'Wednesday'),
+            ('Thursday', 'Thursday'),
+            ('Friday', 'Friday'),
+            ('Saturday', 'Saturday'),
+            ('Sunday', 'Sunday'),
+        ]
+    )
+    start_time = models.TimeField()
+    end_time = models.TimeField()
     is_available = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'RoomAvailability'
 
     def __str__(self):
-        return f"{self.room.room_number} - {self.day_of_week}"
+        return f"{self.room.room_number} - {self.day_of_week} {self.start_time}-{self.end_time}"
 
 
 # --- Optional Product Table ---

@@ -67,12 +67,3 @@ INSERT INTO RoomAvailability (room_id, day_of_week, start_time, end_time, is_ava
 (2, 'Tuesday', '08:00:00', '20:00:00', TRUE),
 (3, 'Wednesday', '09:00:00', '17:00:00', TRUE),
 (4, 'Thursday', '10:00:00', '18:00:00', TRUE);
-
--- 11. Insert products
-INSERT INTO Product (product_name, product_description, product_price) VALUES
-('Lab Kit A', 'Basic chemistry lab kit', 49.99),
-('Math Workbook', 'Supplementary exercises for calculus', 19.99),
-('USB Drive', '32GB storage device', 9.99),
-('Headphones', 'Noise-cancelling headphones for study', 79.99);
-
-SELECT * from booking;

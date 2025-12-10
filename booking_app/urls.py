@@ -2,7 +2,8 @@ from django.urls import path
 from .views import HomeView, BookingCreateView, BookingListView, AdminDashboardView, LoginViewCustom, LogoutViewCustom, \
     AdminBookingCreateView, UpdateBookingStatusView, NotificationsView, RoomCreateView, RoomListView, RoomUpdateView, \
     RoomTypeListView, RoomTypeCreateView, UserListView, UserCreateView, UserUpdateView, UserDeleteView, \
-    RoomTypeUpdateView, RoomDeleteView, RoomTypeDeleteView, RegisterView,EditProfileView
+    RoomTypeUpdateView, RoomDeleteView, RoomTypeDeleteView, RegisterView, EditProfileView, AuditLogView, \
+    DeleteBookingView
 
 # ⚠️ NOTE: no app_name here, so you can use {% url 'booking_list' %} directly
 urlpatterns = [
@@ -12,6 +13,7 @@ urlpatterns = [
     path('admin-dashboard/', AdminDashboardView.as_view(), name='admin_dashboard'),
     path('admin-bookings/create/', AdminBookingCreateView.as_view(), name='admin_create_booking'),
     path('admin-bookings/<int:booking_id>/update-status/', UpdateBookingStatusView.as_view(), name='update_booking_status'),
+    path('bookings/<int:booking_id>/delete/', DeleteBookingView.as_view(), name='delete_booking'),
     path('notifications/', NotificationsView.as_view(), name='notifications'),
     path('login/', LoginViewCustom.as_view(), name='login'),
     path('logout/', LogoutViewCustom.as_view(), name='logout'),
@@ -31,5 +33,6 @@ urlpatterns = [
     path('users/<int:user_id>/delete/', UserDeleteView.as_view(), name='user_delete'),
     path('register/', RegisterView.as_view(), name='register'),
     path('edit-profile/', EditProfileView.as_view(), name='edit_profile'),
+    path('audit/', AuditLogView.as_view(), name='audit_log'),
 ]
 
