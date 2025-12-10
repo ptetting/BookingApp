@@ -1,8 +1,51 @@
 from django import forms
 from django.utils import timezone
 from django.core.exceptions import ValidationError
-from booking_app.models import Booking, Room, Role
+from django.forms import modelformset_factory
+from booking_app.models import Booking, Room, Role, RoomAvailability
 from booking_app.models import Room, RoomType, User
+
+
+from django.forms import modelformset_factory
+from .models import RoomAvailability
+
+# booking_app/forms.py
+from django import forms
+from django.forms import modelformset_factory
+from .models import RoomAvailability
+
+class RoomAvailabilityForm(forms.ModelForm):
+    class Meta:
+        model = RoomAvailability
+        fields = ('day_of_week', 'start_time', 'end_time')  # no is_available
+        widgets = {
+            'start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'end_time': forms.TimeInput(attrs={'type': 'time'}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_time')
+        end = cleaned_data.get('end_time')
+
+        # If both times are empty, treat as unavailable (skip saving later)
+        if not start and not end:
+            raise forms.ValidationError("Empty row — will be treated as unavailable.")
+
+        # Optional: enforce end > start
+        if start and end and end <= start:
+            raise forms.ValidationError("End time must be later than start time.")
+
+        return cleaned_data
+
+
+RoomAvailabilityFormSet = modelformset_factory(
+    RoomAvailability,
+    form=RoomAvailabilityForm,
+    extra=7,          # one blank row by default
+    can_delete=False   # allow removing rows
+)
+
 
 class RoomForm(forms.ModelForm):
     class Meta:
@@ -44,29 +87,29 @@ class BookingForm(forms.ModelForm):
         start = cleaned_data.get('start_time')
         end = cleaned_data.get('end_time')
 
-        if room and start and end:
-            # Prevent past bookings
-            if start and timezone.is_naive(start):
-                start = timezone.make_aware(start)
-            if end and timezone.is_naive(end):
-                end = timezone.make_aware(end)
-            if start < timezone.now():
-                raise ValidationError("Start time cannot be in the past.")
-            if end < timezone.now():
-                raise ValidationError("End time cannot be in the past.")
+        if not room or not start or not end:
+            return cleaned_data
 
-            # Check for overlapping bookings
-            conflicts = Booking.objects.filter(
-                room=room,
-                start_time__lt=end,
-                end_time__gt=start,
-                status__in=['pending', 'approved']  # only block active bookings
-            )
-            if conflicts.exists():
-                raise ValidationError(f"{room} is already booked for this time range.")
+        # Get weekday code from start_time (Mon, Tue, etc.)
+        weekday_code = start.strftime("%A")  # e.g. "Mon"
 
-            if start >= end:
-                raise ValidationError("End time must be after start time.")
+        # Find availability slots for that room/day
+        availabilities = RoomAvailability.objects.filter(room=room, day_of_week=weekday_code)
+
+        if not availabilities.exists():
+            raise forms.ValidationError("This room has no availability on that day.")
+
+        # Check if booking fits inside ANY availability slot
+        valid_slot = False
+        for avail in availabilities:
+            if start.time() >= avail.start_time and end.time() <= avail.end_time:
+                valid_slot = True
+                break
+
+        if not valid_slot:
+            raise forms.ValidationError("Booking must be within the room’s available time periods.")
+
+        return cleaned_data
 
 class AdminBookingForm(forms.ModelForm):
     class Meta:
@@ -83,24 +126,29 @@ class AdminBookingForm(forms.ModelForm):
         start = cleaned_data.get('start_time')
         end = cleaned_data.get('end_time')
 
-        if room and start and end:
-            # Prevent past bookings
-            if start < timezone.now():
-                raise ValidationError("Start time cannot be in the past.")
-            if end < timezone.now():
-                raise ValidationError("End time cannot be in the past.")
+        if not room or not start or not end:
+            return cleaned_data
 
-            conflicts = Booking.objects.filter(
-                room=room,
-                start_time__lt=end,
-                end_time__gt=start,
-                status__in=['pending', 'approved']
-            )
-            if conflicts.exists():
-                raise ValidationError(f"{room} is already booked for this time range.")
+        # Get weekday code from start_time (Mon, Tue, etc.)
+        weekday_code = start.strftime("%A")  # e.g. "Mon"
 
-            if start >= end:
-                raise ValidationError("End time must be after start time.")
+        # Find availability slots for that room/day
+        availabilities = RoomAvailability.objects.filter(room=room, day_of_week=weekday_code)
+
+        if not availabilities.exists():
+            raise forms.ValidationError("This room has no availability on that day.")
+
+        # Check if booking fits inside ANY availability slot
+        valid_slot = False
+        for avail in availabilities:
+            if start.time() >= avail.start_time and end.time() <= avail.end_time:
+                valid_slot = True
+                break
+
+        if not valid_slot:
+            raise forms.ValidationError("Booking must be within the room’s available time periods.")
+
+        return cleaned_data
 
 
 

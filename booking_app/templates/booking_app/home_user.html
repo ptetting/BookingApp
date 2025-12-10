@@ -1,68 +1,44 @@
-{% extends 'booking_app/base.html' %}
+<section class="card">
+  <h2>Available Rooms</h2>
+  <p class="card-subtitle">Check the rooms you can reserve on campus.</p>
 
-{% block title %}Home - User{% endblock %}
-
-{% block content %}
-
-    <section class="card">
-      <h2>Available Rooms</h2>
-      <p class="card-subtitle">Check the rooms you can reserve on campus.</p>
-
-      {% if rooms %}
-        <div class="table-wrapper">
-          <table>
-            <thead>
+  {% if rooms %}
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Room #</th>
+            <th>Type</th>
+            <th>Capacity</th>
+            <th>Day</th>
+            <th>Start</th>
+            <th>End</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for room in rooms %}
+            {% for avail in room.availabilities.all %}
               <tr>
-                <th>Room #</th>
-                <th>Type</th>
-                <th>Capacity</th>
+                <td>{{ room.room_number }}</td>
+                <td>{{ room.room_type.room_type_name }}</td>
+                <td>{{ room.capacity }}</td>
+                <td>{{ avail.get_day_of_week_display }}</td>
+                <td>{{ avail.start_time|time:"H:i" }}</td>
+                <td>{{ avail.end_time|time:"H:i" }}</td>
               </tr>
-            </thead>
-            <tbody>
-              {% for room in rooms %}
-                <tr>
-                  <td>{{ room.room_number }}</td>
-                  <td>{{ room.room_type.room_type_name }}</td>
-                  <td>{{ room.capacity }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="muted">No rooms available yet.</p>
-      {% endif %}
-    </section>
-
-    <section class="card">
-      <h2>Your Bookings{% if today %} ({{ today }}){% endif %}</h2>
-      <p class="card-subtitle">Review your upcoming and past room reservations.</p>
-
-      {% if bookings %}
-        <div class="table-wrapper">
-          <table>
-            <thead>
+            {% empty %}
               <tr>
-                <th>Room</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
+                <td>{{ room.room_number }}</td>
+                <td>{{ room.room_type.room_type_name }}</td>
+                <td>{{ room.capacity }}</td>
+                <td colspan="3" class="muted">No availability set</td>
               </tr>
-            </thead>
-            <tbody>
-              {% for booking in bookings %}
-                <tr>
-                  <td>{{ booking.room.room_number }}</td>
-                  <td>{{ booking.start_time }}</td>
-                  <td>{{ booking.end_time }}</td>
-                  <td>{{ booking.status|title }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <p class="muted">You have no bookings yet.</p>
-      {% endif %}
-    </section>
-{% endblock %}
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No rooms available yet.</p>
+  {% endif %}
+</section>

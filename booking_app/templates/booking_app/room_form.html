@@ -1,225 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>{{ form_title }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+{% extends 'booking_app/base.html' %}
+{% block title %}Create Room{% endblock %}
 
-  <style>
-    :root {
-      --bg-gradient: linear-gradient(135deg, #1e3c72, #2a5298, #6dd5ed);
-      --card-bg: rgba(255, 255, 255, 0.96);
-      --primary: #1e88e5;
-      --accent: #00c9a7;
-      --text-main: #0f172a;
-      --text-muted: #6b7280;
-      --danger: #d32f2f;
-      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.35);
-      --radius-xl: 18px;
-      --transition-fast: 0.18s ease-out;
-    }
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <h2>{{ form_title }}</h2>
+    <span class="card-subtitle">Fill in room details and availability</span>
+  </div>
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <form method="post" class="mt-3">
+    {% csrf_token %}
 
-    body {
-      font-family: system-ui, Arial, sans-serif;
-      background: var(--bg-gradient);
-      min-height: 100vh;
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-main);
-    }
-
-    .card {
-      width: 100%;
-      max-width: 540px;
-      background: var(--card-bg);
-      padding: 26px 26px 22px;
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-soft);
-      backdrop-filter: blur(18px);
-      border: 1px solid rgba(255, 255, 255, 0.75);
-      position: relative;
-      overflow: hidden;
-      animation: slideUp 0.4s ease-out;
-    }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -60%;
-      background: radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 60%);
-      z-index: -1;
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-      font-size: 1.7rem;
-      text-align: center;
-      margin-bottom: 10px;
-      color: #0f172a;
-    }
-
-    .messages {
-      margin-bottom: 14px;
-    }
-
-    .messages ul {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    .messages li {
-      background: rgba(0, 150, 0, 0.08);
-      padding: 8px 12px;
-      border-left: 4px solid #16a34a;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      font-size: 0.88rem;
-    }
-
-    .error {
-      color: var(--danger);
-      font-size: 0.82rem;
-      margin-top: 4px;
-      margin-bottom: 8px;
-    }
-
-    label {
-      display: block;
-      font-weight: 600;
-      font-size: 0.9rem;
-      margin-top: 14px;
-      color: var(--text-muted);
-    }
-
-    input,
-    select,
-    textarea {
-      width: 100%;
-      padding: 10px 12px;
-      margin-top: 5px;
-      border-radius: 10px;
-      border: 1px solid #d1d5db;
-      font-size: 0.95rem;
-      background: rgba(255, 255, 255, 0.96);
-      transition: border-color var(--transition-fast),
-                  box-shadow var(--transition-fast),
-                  transform var(--transition-fast),
-                  background-color var(--transition-fast);
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.22);
-      background-color: #fff;
-      transform: translateY(-1px);
-    }
-
-    .form-buttons {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 22px;
-      gap: 10px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 10px 18px;
-      border-radius: 999px;
-      text-align: center;
-      border: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-decoration: none;
-      transition: transform var(--transition-fast),
-                  box-shadow var(--transition-fast),
-                  background-color var(--transition-fast),
-                  color var(--transition-fast);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--primary), var(--accent));
-      color: white;
-      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.35);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 32px rgba(30, 64, 175, 0.45);
-    }
-
-    .btn-secondary {
-      background: #e5e7eb;
-      color: #111827;
-      border: 1px solid #d1d5db;
-    }
-
-    .btn-secondary:hover {
-      background: #f3f4f6;
-      transform: translateY(-1px);
-    }
-
-    @media (max-width: 520px) {
-      body {
-        padding: 14px;
-      }
-
-      .card {
-        padding: 22px 18px;
-      }
-
-      .form-buttons {
-        flex-direction: column;
-      }
-    }
-  </style>
-</head>
-
-<body>
-  <div class="card">
-    <h1>{{ form_title }}</h1>
-
-    <div class="messages">
-      {% if messages %}
-        <ul>
-          {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    </div>
-
-    <form method="post">
-      {% csrf_token %}
-
-      {% for field in form %}
-        <label>{{ field.label }}{% if field.field.required %}*{% endif %}</label>
+    <!-- Room fields -->
+    {% for field in room_form %}
+      <div class="mb-3">
+        <label class="form-label">{{ field.label }}{% if field.field.required %}*{% endif %}</label>
         {{ field }}
         {% if field.errors %}
-          <div class="error">{{ field.errors|striptags }}</div>
+          <div class="text-danger small">{{ field.errors|striptags }}</div>
         {% endif %}
-      {% endfor %}
-
-      <div class="form-buttons">
-        <a href="{% url 'room_list' %}" class="btn btn-secondary">Back</a>
-        <button type="submit" class="btn btn-primary">{{ submit_text }}</button>
       </div>
-    </form>
-  </div>
-</body>
-</html>
+    {% endfor %}
+
+    <!-- Availability -->
+<h5 class="mt-4">Room Availability</h5>
+{{ availability_formset.management_form }}
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>Day</th>
+      <th>Start</th>
+      <th>End</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for form in availability_formset %}
+      <tr>
+        <td>{{ form.day_of_week }}</td>
+        <td>{{ form.start_time }}</td>
+        <td>{{ form.end_time }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+    <div class="d-flex justify-content-between mt-3">
+      <a href="{% url 'room_list' %}" class="btn btn-secondary">Back</a>
+      <button type="submit" class="btn btn-blue">{{ submit_text }}</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

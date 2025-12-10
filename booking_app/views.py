@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import logout  # we're using session auth, so logout is fine
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views import View
+from django.db import transaction
 from django.views.decorators.cache import never_cache
 from django.utils.decorators import method_decorator
 from datetime import date, datetime
@@ -9,9 +10,20 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from .models import User, Profile,RoomAvailability, ActionLog
 from .forms import LoginForm, BookingForm, AdminBookingForm, UserForm, RoomTypeForm, RoomForm, \
-    UserCreateForm  # ✅ import BookingForm
+    UserCreateForm, RoomAvailabilityFormSet  # ✅ import BookingForm
 from .models import User, Room, Booking, Notification, RoomType
+from django.utils import timezone
 
+
+DAYS = [
+    ('Mon', 'Monday'),
+    ('Tue', 'Tuesday'),
+    ('Wed', 'Wednesday'),
+    ('Thu', 'Thursday'),
+    ('Fri', 'Friday'),
+    ('Sat', 'Saturday'),
+    ('Sun', 'Sunday'),
+]
 
 # ----------------- HELPER -----------------
 def create_notifications_for_booking(action: str, booking):
@@ -55,9 +67,22 @@ def log_action(request, action_description: str):
     )
 
 
+def manage_availability(request):
+    days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+    queryset = RoomAvailability.objects.filter(day_of_week__in=days)
+
+    if request.method == 'POST':
+        formset = RoomAvailabilityFormSet(request.POST, queryset=queryset)
+        if formset.is_valid():
+            formset.save()
+            return redirect('room_list')
+    else:
+        formset = RoomAvailabilityFormSet(queryset=queryset)
+
+    return render(request, 'booking_app/manage_availability.html', {'formset': formset, 'days': days})
+
+
 # ------------------ HOME ------------------
-
-
 @method_decorator(never_cache, name='dispatch')
 class HomeView(View):
     template_name = 'booking_app/home_admin.html'
@@ -68,38 +93,21 @@ class HomeView(View):
 
         today_date = date.today()
 
-        # Get all rooms and their availability
-        rooms = Room.objects.all()
         rooms_with_availability = []
-
-        for room in rooms:
-            availability = RoomAvailability.objects.filter(room=room).order_by('day_of_week', 'start_time')
-
-            for avail in availability:
-                # Ensure start_time and end_time are valid datetime objects
-                if not isinstance(avail.start_time, datetime) or not isinstance(avail.end_time, datetime):
-                    avail.is_available = False
-                    continue
-
-                overlapping_bookings = Booking.objects.filter(
-                    room=room,
-                    start_time__lt=avail.end_time,
-                    end_time__gt=avail.start_time,
-                    status='approved'
-                )
-                avail.is_available = not overlapping_bookings.exists()
+        for room in Room.objects.all():
+            # Get all availability rows for this room (no need to override is_available)
+            availability = RoomAvailability.objects.filter(room=room)
 
             rooms_with_availability.append({
                 'room': room,
                 'availability': availability
             })
 
-        context = {
+        return render(request, self.template_name, {
             'rooms_with_availability': rooms_with_availability,
             'today': today_date,
-        }
+        })
 
-        return render(request, self.template_name, context)
 
 
 
@@ -253,35 +261,49 @@ class RoomListView(View):
 
 @method_decorator(never_cache, name='dispatch')
 class RoomCreateView(View):
-    template_name = 'booking_app/room_form.html'
-
-    def get(self, request):
-        if request.session.get('role_name') != 'Admin':
-            return redirect('home')
-        form = RoomForm()
-        return render(request, self.template_name, {
-            'form': form,
-            'form_title': 'Create New Room',
-            'submit_text': 'Create Room',
-            'delete_url': None
+    def get(self, request, *args, **kwargs):
+        room_form = RoomForm()
+        formset = RoomAvailabilityFormSet(queryset=RoomAvailability.objects.none())
+        return render(request, 'booking_app/room_form.html', {
+            'room_form': room_form,
+            'availability_formset': formset,
+            'form_title': "Create Room",
+            'submit_text': "Create Room"
         })
 
-    def post(self, request):
-        if request.session.get('role_name') != 'Admin':
-            return redirect('home')
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            room = form.save()
+    def post(self, request, *args, **kwargs):
+        room_form = RoomForm(request.POST)
+        formset = RoomAvailabilityFormSet(request.POST, queryset=RoomAvailability.objects.none())
 
-            log_action(request, f"Created room {room.room_number}")
-            messages.success(request, "Room created successfully.")
+        if room_form.is_valid() and formset.is_valid():
+            room = room_form.save()
+            for form in formset.forms:
+                if not form.cleaned_data:
+                    continue  # skip empty rows
+                start = form.cleaned_data.get('start_time')
+                end = form.cleaned_data.get('end_time')
+                day = form.cleaned_data.get('day_of_week')
+
+                # Only save if times are provided
+                if start and end:
+                    RoomAvailability.objects.create(
+                        room=room,
+                        day_of_week=day,
+                        start_time=start,
+                        end_time=end,
+                        is_available=True
+                    )
+                # If no times, skip (treated as unavailable)
+
             return redirect('room_list')
-        return render(request, self.template_name, {
-            'form': form,
-            'form_title': 'Create New Room',
-            'submit_text': 'Create Room',
-            'delete_url': None
+
+        return render(request, 'booking_app/room_form.html', {
+            'room_form': room_form,
+            'availability_formset': formset,
+            'form_title': "Create Room",
+            'submit_text': "Create Room"
         })
+
 
 
 @method_decorator(never_cache, name='dispatch')
